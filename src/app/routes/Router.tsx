@@ -7,6 +7,7 @@ import CreateClubPage from "@/pages/createclub/CreateClubPage";
 import VerifyCodePage from "@/pages/verifycode/VerifyCodePage";
 import DashboardLayout from "../layout/DashboardLayout";
 import RecruitPage from "@/pages/recruit/RecruitPage";
+import RecruitDetailPage from "@/pages/recruitdetail/RecruitDetailPage";
 
 export const router = createBrowserRouter([
   {
@@ -60,6 +61,16 @@ export const router = createBrowserRouter([
       {
         index: true,
         element: <RecruitPage />,
+      },
+    ],
+  },
+  {
+    path: "/recruit/detail",
+    element: <DashboardLayout />,
+    children: [
+      {
+        index: true,
+        element: <RecruitDetailPage />,
       },
     ],
   },
