@@ -5,6 +5,8 @@ import RootLayout from "../layout/RootLayout";
 import GreetingPage from "../../pages/greeting/GreetingPage";
 import CreateClubPage from "@/pages/createclub/CreateClubPage";
 import VerifyCodePage from "@/pages/verifycode/VerifyCodePage";
+import DashBoardPage from "@/pages/dashboard/DashBoardPage";
+import DashboardLayout from "../layout/DashboardLayout";
 
 export const router = createBrowserRouter([
   {
@@ -48,6 +50,16 @@ export const router = createBrowserRouter([
       {
         index: true,
         element: <VerifyCodePage />,
+      },
+    ],
+  },
+  {
+    path: "/dashboard",
+    element: <DashboardLayout />,
+    children: [
+      {
+        index: true,
+        element: <DashBoardPage />,
       },
     ],
   },
