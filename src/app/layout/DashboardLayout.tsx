@@ -11,11 +11,11 @@ const DashboardLayout = () => {
   };
 
   return (
-    <div className="flex flex-col w-full h-screen bg-white">
+    <div className="flex flex-col w-full h-screen bg-white overflow-hidden">
       <Header />
       <div className="flex w-full h-screen bg-gray-100">
         <Sidebar isCollapsed={isCollapsed} onToggle={handleToggle} />
-        <div className="flex px-8 py-6">
+        <div className="flex px-8 py-6 w-full h-full">
           <Outlet />
         </div>
       </div>

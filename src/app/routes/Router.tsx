@@ -5,8 +5,8 @@ import RootLayout from "../layout/RootLayout";
 import GreetingPage from "../../pages/greeting/GreetingPage";
 import CreateClubPage from "@/pages/createclub/CreateClubPage";
 import VerifyCodePage from "@/pages/verifycode/VerifyCodePage";
-import DashBoardPage from "@/pages/dashboard/DashBoardPage";
 import DashboardLayout from "../layout/DashboardLayout";
+import RecruitPage from "@/pages/recruit/RecruitPage";
 
 export const router = createBrowserRouter([
   {
@@ -54,12 +54,12 @@ export const router = createBrowserRouter([
     ],
   },
   {
-    path: "/dashboard",
+    path: "/recruit",
     element: <DashboardLayout />,
     children: [
       {
         index: true,
-        element: <DashBoardPage />,
+        element: <RecruitPage />,
       },
     ],
   },
