@@ -1,4 +1,4 @@
-name: Auto Sync Fork (NoWait-USER)
+name: Auto Sync Fork
 
 on:
   push:
