@@ -1,13 +1,16 @@
 import Button from "@/shared/components/Button";
 import { Flag } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 interface SuccessUiProps {
   clubName: string;
 }
 
 const SuccessUi = ({ clubName }: SuccessUiProps) => {
+  const navigate = useNavigate();
+
   const handleStart = () => {
-    // 시작하기 로직
+    navigate("/recruit");
     console.log("시작하기 클릭");
   };
 

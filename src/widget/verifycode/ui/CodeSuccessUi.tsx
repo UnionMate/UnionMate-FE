@@ -1,8 +1,12 @@
 import Button from "@/shared/components/Button";
 import { Flag } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const CodeSuccessUi = () => {
+  const navigate = useNavigate();
+
   const handleStart = () => {
+    navigate("/recruit");
     // 시작하기 로직
     console.log("시작하기 클릭");
   };
