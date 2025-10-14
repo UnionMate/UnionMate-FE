@@ -8,6 +8,8 @@ import VerifyCodePage from "@/pages/verifycode/VerifyCodePage";
 import DashboardLayout from "../layout/DashboardLayout";
 import RecruitPage from "@/pages/recruit/RecruitPage";
 import RecruitDetailPage from "@/pages/recruitdetail/RecruitDetailPage";
+import ApplicationformPage from "@/pages/applicationform/ApplicationformPage";
+import FormEditPage from "@/pages/formEdit/formEditPage";
 
 export const router = createBrowserRouter([
   {
@@ -61,6 +63,26 @@ export const router = createBrowserRouter([
       {
         index: true,
         element: <RecruitPage />,
+      },
+    ],
+  },
+  {
+    path: "/applicationform",
+    element: <DashboardLayout />,
+    children: [
+      {
+        index: true,
+        element: <ApplicationformPage />,
+      },
+    ],
+  },
+  {
+    path: "/applicationform/edit",
+    element: <RootLayout />,
+    children: [
+      {
+        index: true,
+        element: <FormEditPage />,
       },
     ],
   },

@@ -8,6 +8,7 @@ import {
   ChevronRight,
   User,
 } from "lucide-react";
+import { useLocation, useNavigate } from "react-router-dom";
 
 interface SidebarProps {
   isCollapsed: boolean;
@@ -15,11 +16,14 @@ interface SidebarProps {
 }
 
 const Sidebar = ({ isCollapsed, onToggle }: SidebarProps) => {
+  const navigate = useNavigate();
+  const location = useLocation();
+
   const menuItems = [
-    { icon: Users, label: "모집", isActive: false },
-    { icon: FileText, label: "지원서 양식", isActive: false },
-    { icon: Mail, label: "메일 템플릿", isActive: false },
-    { icon: Settings, label: "동아리 관리", isActive: false },
+    { icon: Users, label: "모집", path: "/recruit" },
+    { icon: FileText, label: "지원서 양식", path: "/applicationform" },
+    { icon: Mail, label: "메일 템플릿" },
+    { icon: Settings, label: "동아리 관리" },
   ];
 
   return (
@@ -57,24 +61,36 @@ const Sidebar = ({ isCollapsed, onToggle }: SidebarProps) => {
 
       {/* Menu Items */}
       <div className="flex-1 px-4">
-        {menuItems.map((item, index) => (
-          <div
-            key={index}
-            className={clsx(
-              "flex items-center gap-3 px-3 py-3 rounded-lg mb-2 cursor-pointer transition-colors",
-              item.isActive
-                ? "bg-[#80ca14] text-white"
-                : "text-gray-700 hover:bg-gray-100"
-            )}
-          >
-            <item.icon className="w-5 h-5" />
-            {!isCollapsed && (
-              <span className="font-medium whitespace-nowrap">
-                {item.label}
-              </span>
-            )}
-          </div>
-        ))}
+        {menuItems.map((item, index) => {
+          const isActive = item.path
+            ? location.pathname.startsWith(item.path)
+            : false;
+
+          return (
+            <div
+              key={index}
+              onClick={() => {
+                if (item.path) {
+                  navigate(item.path);
+                }
+              }}
+              className={clsx(
+                "flex items-center gap-3 px-3 py-3 rounded-lg mb-2 transition-colors",
+                item.path ? "cursor-pointer" : "cursor-default",
+                isActive
+                  ? "bg-[#80ca14] text-white"
+                  : "text-gray-700 hover:bg-gray-100"
+              )}
+            >
+              <item.icon className="w-5 h-5" />
+              {!isCollapsed && (
+                <span className="font-medium whitespace-nowrap">
+                  {item.label}
+                </span>
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );
