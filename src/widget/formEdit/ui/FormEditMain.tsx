@@ -107,21 +107,18 @@ const FIXED_FIELDS = [
   {
     id: "applicant-name",
     label: "이름",
-    description: "지원자의 이름을 입력받아요.",
     placeholder: "이름을 입력해주세요.",
     type: "text" as const,
   },
   {
     id: "applicant-phone",
     label: "전화번호",
-    description: "연락 가능한 전화번호를 입력받아요.",
     placeholder: "전화번호를 입력해주세요.",
     type: "tel" as const,
   },
   {
     id: "applicant-email",
     label: "이메일",
-    description: "지원자의 이메일 주소를 입력받아요.",
     placeholder: "이메일을 입력해주세요.",
     type: "email" as const,
   },
@@ -421,7 +418,7 @@ const FormEditMain = ({
           placeholder="지원서 양식의 제목을 입력해주세요"
         />
 
-        <div className="flex flex-col gap-4 rounded-3xl bg-white p-6 shadow-[0px_12px_32px_rgba(28,93,255,0.05)]">
+        <div className="flex flex-col gap-4 rounded-3xl bg-white p-6 shadow-[0px_12px_32px_rgba(128,202,20,0.05)]">
           <div className="flex items-center justify-between">
             <div className="flex flex-col gap-1">
               <span className="text-title-16-semibold text-black-100">
@@ -461,12 +458,12 @@ const FormEditMain = ({
           </div>
 
           {isPickerOpen && (
-            <div className="mt-2 w-full max-w-[360px] rounded-3xl border border-[#C3D8FF] bg-white p-6 shadow-[0px_12px_32px_rgba(28,93,255,0.08)]">
-              <div className="flex items-center justify-between text-[#2F80ED]">
+            <div className="mt-2 w-full max-w-[360px] rounded-3xl border border-primary/30 bg-white p-6 shadow-[0px_12px_32px_rgba(128,202,20,0.08)]">
+              <div className="flex items-center justify-between text-primary">
                 <button
                   type="button"
                   onClick={handlePrevMonth}
-                  className="rounded-full p-2 transition hover:bg-[#E7F0FF]"
+                  className="rounded-full p-2 transition hover:bg-primary/10"
                 >
                   <ChevronLeft className="h-5 w-5" />
                 </button>
@@ -475,20 +472,20 @@ const FormEditMain = ({
                     {currentMonth.getFullYear()}년 {currentMonth.getMonth() + 1}
                     월
                   </span>
-                  <span className="text-15-medium text-[#2F80ED]">
+                  <span className="text-15-medium text-primary">
                     접수 기간은 수정이 가능해요
                   </span>
                 </div>
                 <button
                   type="button"
                   onClick={handleNextMonth}
-                  className="rounded-full p-2 transition hover:bg-[#E7F0FF]"
+                  className="rounded-full p-2 transition hover:bg-primary/10"
                 >
                   <ChevronRight className="h-5 w-5" />
                 </button>
               </div>
 
-              <div className="mt-4 grid grid-cols-7 gap-y-2 text-center text-15-medium text-[#2F80ED]">
+              <div className="mt-4 grid grid-cols-7 gap-y-2 text-center text-15-medium text-primary">
                 {DAY_LABELS.map((label) => (
                   <span key={label}>{label}</span>
                 ))}
@@ -522,7 +519,7 @@ const FormEditMain = ({
 
                   const rangeWrapperClass = clsx(
                     "relative flex h-10 w-full items-center justify-center",
-                    showRangeBackground && "bg-[#D8EBFF]",
+                    showRangeBackground && "bg-primary/10",
                     showRangeBackground &&
                       isRangeStart &&
                       !isRangeEnd &&
@@ -544,10 +541,10 @@ const FormEditMain = ({
                       !isRangeEnd &&
                       !isBetween &&
                       isCurrentMonth &&
-                      "hover:bg-[#E7F0FF]",
-                    isBetween && "text-[#2F80ED]",
+                      "hover:bg-primary/10",
+                    isBetween && "text-primary",
                     (isRangeStart || isRangeEnd) &&
-                      "bg-[#2F80ED] text-white font-semibold",
+                      "bg-primary text-white font-semibold",
                     isRangeStart && isRangeEnd && "font-semibold"
                   );
 
@@ -572,7 +569,7 @@ const FormEditMain = ({
                 <button
                   type="button"
                   onClick={handleReset}
-                  className="rounded-lg border border-[#AFC9FF] px-4 py-2 text-title-14-semibold text-[#2F80ED] transition hover:bg-[#E7F0FF]"
+                  className="rounded-lg border border-primary/30 px-4 py-2 text-title-14-semibold text-primary transition hover:bg-primary/10"
                 >
                   초기화
                 </button>
@@ -583,7 +580,7 @@ const FormEditMain = ({
                   className={clsx(
                     "rounded-lg px-6 py-2 text-title-14-semibold transition",
                     hasCompletedRange
-                      ? "bg-[#2F80ED] text-white hover:opacity-90"
+                      ? "bg-primary text-white hover:opacity-90"
                       : "cursor-not-allowed bg-black-10 text-black-40"
                   )}
                 >
@@ -612,7 +609,10 @@ const FormEditMain = ({
             <div
               key={question.id}
               ref={(node) => registerQuestionRef(question.id, node)}
-              className={clsx("mb-6", index === questions.length - 1 && "mb-12")}
+              className={clsx(
+                "mb-6",
+                index === questions.length - 1 && "mb-12"
+              )}
             >
               <QuestionComponents
                 question={question}
@@ -649,16 +649,16 @@ const FormEditMain = ({
                 className={clsx(
                   "group flex items-center gap-3 rounded-2xl border px-4 py-3 text-left transition",
                   isActive
-                    ? "border-[#C7DAFF] bg-[#EEF3FF] shadow-[0px_6px_20px_rgba(28,93,255,0.12)]"
-                    : "border-transparent bg-transparent hover:border-[#E1E9FF] hover:bg-[#F6F8FF]"
+                    ? "border-primary/40 bg-primary/10 shadow-[0px_6px_20px_rgba(128,202,20,0.12)]"
+                    : "border-transparent bg-transparent hover:border-primary/20 hover:bg-primary/10"
                 )}
               >
                 <span
                   className={clsx(
-                    "flex h-10 w-10 items-center justify-center rounded-xl text-[#3B6DFF] transition",
+                    "flex h-10 w-10 items-center justify-center rounded-xl text-primary transition",
                     isActive
-                      ? "bg-[#D1E0FF]"
-                      : "bg-[#E9F0FF] group-hover:bg-[#DCE7FF]"
+                      ? "bg-primary/20"
+                      : "bg-primary/10 group-hover:bg-primary/20"
                   )}
                 >
                   <Icon className="h-5 w-5" strokeWidth={1.8} />
@@ -667,8 +667,8 @@ const FormEditMain = ({
                   className={clsx(
                     "text-title-16-semibold",
                     isActive
-                      ? "text-[#2F59C4]"
-                      : "text-black-80 group-hover:text-[#325ECF]"
+                      ? "text-primary"
+                      : "text-black-80 group-hover:text-primary"
                   )}
                 >
                   {tool.label}
@@ -696,7 +696,7 @@ const FixedQuestionCard = ({
   return (
     <div
       className={clsx(
-        "rounded-3xl border border-[#DCE6FF] bg-white px-8 py-6 shadow-[0px_16px_40px_rgba(29,87,254,0.06)]",
+        "rounded-3xl border border-primary/20 bg-white px-8 py-6 shadow-[0px_16px_40px_rgba(128,202,20,0.06)]",
         className
       )}
     >
@@ -708,19 +708,17 @@ const FixedQuestionCard = ({
             </span>
             <span className="text-[#FF5F7B]">*</span>
           </div>
-          <span className="rounded-full bg-[#F2F6FF] px-3 py-1 text-xs font-semibold text-[#2F59C4]">
+          <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
             고정 항목
           </span>
         </div>
-
-        <p className="text-15-medium text-black-60">{field.description}</p>
 
         <input
           type={field.type}
           disabled
           readOnly
           placeholder={field.placeholder}
-          className="w-full rounded-xl border border-[#E3EBFF] bg-black-5 px-4 py-3 text-16-medium text-black-45 placeholder:text-black-35"
+          className="w-full rounded-xl border border-primary/20 bg-black-5 px-4 py-3 text-16-medium text-black-45 placeholder:text-black-35"
         />
 
         <span className="text-13-medium text-black-35">
