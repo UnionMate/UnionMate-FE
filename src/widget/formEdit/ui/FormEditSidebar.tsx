@@ -1,19 +1,28 @@
 import type { QuestionConfig } from "./FormEditMain";
-import { GripVertical } from "lucide-react";
+import { GripVertical, Trash2 } from "lucide-react";
 import clsx from "clsx";
 import { useState } from "react";
 
 type FormEditSidebarProps = {
   questions: QuestionConfig[];
   onReorder: (questions: QuestionConfig[]) => void;
+  onSelectQuestion: (questionId: string) => void;
+  onRemoveQuestion: (questionId: string) => void;
 };
 
-const FormEditSidebar = ({ questions, onReorder }: FormEditSidebarProps) => {
+const FormEditSidebar = ({
+  questions,
+  onReorder,
+  onSelectQuestion,
+  onRemoveQuestion,
+}: FormEditSidebarProps) => {
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
 
   const handleDragStart = (index: number) => {
     setDraggedIndex(index);
+    setIsDragging(true);
   };
 
   const handleDragOver = (e: React.DragEvent, index: number) => {
@@ -41,11 +50,13 @@ const FormEditSidebar = ({ questions, onReorder }: FormEditSidebarProps) => {
     onReorder(newQuestions);
     setDraggedIndex(null);
     setDragOverIndex(null);
+    setIsDragging(false);
   };
 
   const handleDragEnd = () => {
     setDraggedIndex(null);
     setDragOverIndex(null);
+    setIsDragging(false);
   };
 
   const getQuestionLabel = (type: QuestionConfig["type"]) => {
@@ -91,7 +102,7 @@ const FormEditSidebar = ({ questions, onReorder }: FormEditSidebarProps) => {
   };
 
   return (
-    <div className="flex flex-col p-6 h-full bg-white border-r border-black-10">
+    <div className="flex h-full w-[280px] shrink-0 flex-col border-r border-black-10 bg-white p-6">
       <div className="flex flex-col gap-3 mb-6">
         <div className="flex text-title-18-semibold text-black-100">
           질문 리스트
@@ -124,6 +135,11 @@ const FormEditSidebar = ({ questions, onReorder }: FormEditSidebarProps) => {
                   ? "bg-primary/10 border-primary/50 shadow-lg"
                   : "bg-black-5 border-black-15 hover:border-primary/30 hover:bg-primary/5"
               )}
+              onClick={() => {
+                if (!isDragging) {
+                  onSelectQuestion(question.id);
+                }
+              }}
             >
               <GripVertical
                 className="h-5 w-5 text-black-40"
@@ -134,7 +150,7 @@ const FormEditSidebar = ({ questions, onReorder }: FormEditSidebarProps) => {
                   <span className="text-15-medium text-black-80">
                     {index + 1}.
                   </span>
-                  <span className="text-15-semibold text-black-90 truncate">
+                  <span className="max-w-[160px] truncate text-15-semibold text-black-90">
                     {question.title || "제목 없음"}
                   </span>
                 </div>
@@ -147,6 +163,17 @@ const FormEditSidebar = ({ questions, onReorder }: FormEditSidebarProps) => {
                   {getQuestionLabel(question.type)}
                 </span>
               </div>
+              <button
+                type="button"
+                className="flex h-8 w-8 items-center justify-center rounded-full text-black-35 transition hover:bg-primary/10 hover:text-primary"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onRemoveQuestion(question.id);
+                }}
+                onMouseDown={(event) => event.stopPropagation()}
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
             </div>
           ))
         )}

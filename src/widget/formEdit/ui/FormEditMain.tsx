@@ -3,12 +3,11 @@ import {
   BarChart2,
   CalendarCheck,
   CheckSquare,
-  FileText,
-  ListChecks,
-  StickyNote,
-  TextCursorInput,
   ChevronLeft,
   ChevronRight,
+  FileText,
+  ListChecks,
+  TextCursorInput,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -86,6 +85,11 @@ export type QuestionConfig = {
   description: string;
   isRequired: boolean;
   options?: QuestionOption[];
+  answerPlaceholder?: string;
+  scaleMinLabel?: string;
+  scaleMaxLabel?: string;
+  scaleSteps?: number;
+  dateValue?: string;
 };
 
 const MAX_OPTIONS = 5;
@@ -97,7 +101,30 @@ const QUESTION_TOOLS: QuestionTool[] = [
   { id: "long-answer", label: "장문형 답변", icon: FileText },
   { id: "level-check", label: "정도 체크", icon: BarChart2 },
   { id: "date-picker", label: "날짜 선택", icon: CalendarCheck },
-  { id: "description", label: "설명 추가", icon: StickyNote },
+];
+
+const FIXED_FIELDS = [
+  {
+    id: "applicant-name",
+    label: "이름",
+    description: "지원자의 이름을 입력받아요.",
+    placeholder: "이름을 입력해주세요.",
+    type: "text" as const,
+  },
+  {
+    id: "applicant-phone",
+    label: "전화번호",
+    description: "연락 가능한 전화번호를 입력받아요.",
+    placeholder: "전화번호를 입력해주세요.",
+    type: "tel" as const,
+  },
+  {
+    id: "applicant-email",
+    label: "이메일",
+    description: "지원자의 이메일 주소를 입력받아요.",
+    placeholder: "이메일을 입력해주세요.",
+    type: "email" as const,
+  },
 ];
 
 const createId = () => `${Date.now()}-${Math.random().toString(16).slice(2)}`;
@@ -120,12 +147,58 @@ const createChoiceQuestion = (
   };
 };
 
+const createTextQuestion = (
+  type: Extract<QuestionType, "short-answer" | "long-answer">
+): QuestionConfig => {
+  return {
+    id: createId(),
+    type,
+    title: "",
+    description: "",
+    isRequired: true,
+  };
+};
+
+const createScaleQuestion = (): QuestionConfig => {
+  return {
+    id: createId(),
+    type: "level-check",
+    title: "",
+    description: "",
+    isRequired: true,
+    scaleSteps: 10,
+    scaleMinLabel: "",
+    scaleMaxLabel: "",
+  };
+};
+
+const createDateQuestion = (): QuestionConfig => {
+  return {
+    id: createId(),
+    type: "date-picker",
+    title: "",
+    description: "",
+    isRequired: true,
+    dateValue: "",
+  };
+};
+
 type FormEditMainProps = {
   questions: QuestionConfig[];
   setQuestions: React.Dispatch<React.SetStateAction<QuestionConfig[]>>;
+  registerQuestionRef: (
+    questionId: string,
+    node: HTMLDivElement | null
+  ) => void;
+  onRemoveQuestion: (questionId: string) => void;
 };
 
-const FormEditMain = ({ questions, setQuestions }: FormEditMainProps) => {
+const FormEditMain = ({
+  questions,
+  setQuestions,
+  registerQuestionRef,
+  onRemoveQuestion,
+}: FormEditMainProps) => {
   const [isPickerOpen, setIsPickerOpen] = useState(false);
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
@@ -159,14 +232,35 @@ const FormEditMain = ({ questions, setQuestions }: FormEditMainProps) => {
   const handleToolClick = (toolId: string) => {
     setSelectedTool(toolId);
 
-    if (toolId === "single-check" || toolId === "multi-check") {
-      setQuestions((prev) => [
-        ...prev,
-        createChoiceQuestion(
-          toolId === "single-check" ? "single-check" : "multi-check"
-        ),
-      ]);
-    }
+    setQuestions((prev) => {
+      if (toolId === "single-check" || toolId === "multi-check") {
+        return [
+          ...prev,
+          createChoiceQuestion(
+            toolId === "single-check" ? "single-check" : "multi-check"
+          ),
+        ];
+      }
+
+      if (toolId === "short-answer" || toolId === "long-answer") {
+        return [
+          ...prev,
+          createTextQuestion(
+            toolId === "short-answer" ? "short-answer" : "long-answer"
+          ),
+        ];
+      }
+
+      if (toolId === "level-check") {
+        return [...prev, createScaleQuestion()];
+      }
+
+      if (toolId === "date-picker") {
+        return [...prev, createDateQuestion()];
+      }
+
+      return prev;
+    });
   };
 
   const updateQuestion = (
@@ -194,6 +288,25 @@ const FormEditMain = ({ questions, setQuestions }: FormEditMainProps) => {
     updateQuestion(questionId, (question) => ({
       ...question,
       description: value,
+    }));
+  };
+
+  const handleAnswerPlaceholderChange = (questionId: string, value: string) => {
+    updateQuestion(questionId, (question) => ({
+      ...question,
+      answerPlaceholder: value,
+    }));
+  };
+
+  const handleScaleLabelChange = (
+    questionId: string,
+    position: "min" | "max",
+    value: string
+  ) => {
+    updateQuestion(questionId, (question) => ({
+      ...question,
+      scaleMinLabel: position === "min" ? value : question.scaleMinLabel,
+      scaleMaxLabel: position === "max" ? value : question.scaleMaxLabel,
     }));
   };
 
@@ -254,12 +367,6 @@ const FormEditMain = ({ questions, setQuestions }: FormEditMainProps) => {
     });
   };
 
-  const handleRemoveQuestion = (questionId: string) => {
-    setQuestions((prev) =>
-      prev.filter((question) => question.id !== questionId)
-    );
-  };
-
   const handlePrevMonth = () => {
     setCurrentMonth(
       (prev) => new Date(prev.getFullYear(), prev.getMonth() - 1, 1)
@@ -307,8 +414,8 @@ const FormEditMain = ({ questions, setQuestions }: FormEditMainProps) => {
     startDate && endDate ? isSameDay(startDate, endDate) : false;
 
   return (
-    <div className="flex h-full w-full gap-6 bg-black-15 px-10 py-10 overflow-y-auto">
-      <div className="flex h-full w-full flex-col gap-6">
+    <div className="flex h-full w-full gap-6 bg-black-15 px-10 pt-10 pb-24 overflow-y-auto">
+      <div className="flex h-full w-full flex-col gap-6 pb-12">
         <input
           className="w-full rounded-xl bg-white px-5 py-4 text-title-16-semibold text-black-100 shadow-sm placeholder:text-black-35 focus:outline-none focus:ring-2 focus:ring-primary/60"
           placeholder="지원서 양식의 제목을 입력해주세요"
@@ -487,25 +594,45 @@ const FormEditMain = ({ questions, setQuestions }: FormEditMainProps) => {
           )}
         </div>
 
-        <div className="flex flex-col gap-4">
-          {questions.map((question) => (
-            <QuestionComponents
-              key={question.id}
-              question={question}
-              onChangeTitle={handleQuestionTitleChange}
-              onChangeDescription={handleQuestionDescriptionChange}
-              onToggleRequired={handleToggleRequired}
-              onChangeOption={handleOptionTextChange}
-              onAddOption={handleAddOption}
-              onRemoveOption={handleRemoveOption}
-              onRemoveQuestion={handleRemoveQuestion}
-              maxOptions={MAX_OPTIONS}
+        <div className="flex flex-col">
+          {FIXED_FIELDS.map((field, index) => (
+            <FixedQuestionCard
+              key={field.id}
+              field={field}
+              className={clsx(
+                "mb-6",
+                index === FIXED_FIELDS.length - 1 && "mb-10"
+              )}
             />
+          ))}
+        </div>
+
+        <div className="flex flex-col">
+          {questions.map((question, index) => (
+            <div
+              key={question.id}
+              ref={(node) => registerQuestionRef(question.id, node)}
+              className={clsx("mb-6", index === questions.length - 1 && "mb-12")}
+            >
+              <QuestionComponents
+                question={question}
+                onChangeTitle={handleQuestionTitleChange}
+                onChangeDescription={handleQuestionDescriptionChange}
+                onToggleRequired={handleToggleRequired}
+                onChangeOption={handleOptionTextChange}
+                onChangePlaceholder={handleAnswerPlaceholderChange}
+                onChangeScaleLabel={handleScaleLabelChange}
+                onAddOption={handleAddOption}
+                onRemoveOption={handleRemoveOption}
+                onRemoveQuestion={onRemoveQuestion}
+                maxOptions={MAX_OPTIONS}
+              />
+            </div>
           ))}
         </div>
       </div>
 
-      <div className="flex min-w-[260px] flex-col gap-3 rounded-3xl bg-white p-6 shadow-[0px_12px_32px_rgba(0,0,0,0.04)]">
+      <div className="sticky top-10 flex min-w-[260px] flex-col gap-3 rounded-3xl bg-white p-6 shadow-[0px_12px_32px_rgba(0,0,0,0.04)] h-fit self-start">
         <span className="text-title-16-semibold text-black-100">
           질문 생성 도구
         </span>
@@ -556,3 +683,50 @@ const FormEditMain = ({ questions, setQuestions }: FormEditMainProps) => {
 };
 
 export default FormEditMain;
+
+type FixedField = (typeof FIXED_FIELDS)[number];
+
+const FixedQuestionCard = ({
+  field,
+  className,
+}: {
+  field: FixedField;
+  className?: string;
+}) => {
+  return (
+    <div
+      className={clsx(
+        "rounded-3xl border border-[#DCE6FF] bg-white px-8 py-6 shadow-[0px_16px_40px_rgba(29,87,254,0.06)]",
+        className
+      )}
+    >
+      <div className="flex flex-col gap-4">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <span className="text-title-18-semibold text-black-90">
+              {field.label}
+            </span>
+            <span className="text-[#FF5F7B]">*</span>
+          </div>
+          <span className="rounded-full bg-[#F2F6FF] px-3 py-1 text-xs font-semibold text-[#2F59C4]">
+            고정 항목
+          </span>
+        </div>
+
+        <p className="text-15-medium text-black-60">{field.description}</p>
+
+        <input
+          type={field.type}
+          disabled
+          readOnly
+          placeholder={field.placeholder}
+          className="w-full rounded-xl border border-[#E3EBFF] bg-black-5 px-4 py-3 text-16-medium text-black-45 placeholder:text-black-35"
+        />
+
+        <span className="text-13-medium text-black-35">
+          이 질문은 기본 항목으로 수정하거나 삭제할 수 없어요.
+        </span>
+      </div>
+    </div>
+  );
+};
