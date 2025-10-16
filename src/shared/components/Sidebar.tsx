@@ -23,7 +23,7 @@ const Sidebar = ({ isCollapsed, onToggle }: SidebarProps) => {
     { icon: Users, label: "모집", path: "/recruit" },
     { icon: FileText, label: "지원서 양식", path: "/applicationform" },
     { icon: Mail, label: "메일 템플릿" },
-    { icon: Settings, label: "동아리 관리" },
+    { icon: Settings, label: "동아리 관리", path: "/setting" },
   ];
 
   return (

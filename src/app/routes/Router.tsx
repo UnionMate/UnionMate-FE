@@ -10,6 +10,7 @@ import RecruitPage from "@/pages/recruit/RecruitPage";
 import RecruitDetailPage from "@/pages/recruitdetail/RecruitDetailPage";
 import ApplicationformPage from "@/pages/applicationform/ApplicationformPage";
 import FormEditPage from "@/pages/formEdit/formEditPage";
+import SettingPage from "@/pages/setting/SettingPage";
 
 export const router = createBrowserRouter([
   {
@@ -56,6 +57,7 @@ export const router = createBrowserRouter([
       },
     ],
   },
+  // DashboardLayout을 사용하는 공통 경로들
   {
     path: "/recruit",
     element: <DashboardLayout />,
@@ -63,6 +65,10 @@ export const router = createBrowserRouter([
       {
         index: true,
         element: <RecruitPage />,
+      },
+      {
+        path: "detail",
+        element: <RecruitDetailPage />,
       },
     ],
   },
@@ -77,22 +83,23 @@ export const router = createBrowserRouter([
     ],
   },
   {
+    path: "/setting",
+    element: <DashboardLayout />,
+    children: [
+      {
+        index: true,
+        element: <SettingPage />,
+      },
+    ],
+  },
+  // RootLayout을 사용하는 경로
+  {
     path: "/applicationform/edit",
     element: <RootLayout />,
     children: [
       {
         index: true,
         element: <FormEditPage />,
-      },
-    ],
-  },
-  {
-    path: "/recruit/detail",
-    element: <DashboardLayout />,
-    children: [
-      {
-        index: true,
-        element: <RecruitDetailPage />,
       },
     ],
   },
