@@ -7,12 +7,13 @@ interface AdminInfo {
   id: number;
   name: string;
   email: string;
+  role: string;
 }
 
 const initialAdmins: AdminInfo[] = [
-  { id: 1, name: "한마리", email: "5464848654@gmail.com" },
-  { id: 2, name: "두마리", email: "5464848654@gmail.com" },
-  { id: 3, name: "세마리", email: "5464848654@gmail.com" },
+  { id: 1, name: "한마리", email: "owner@unionmate.com", role: "소유자" },
+  { id: 2, name: "두마리", email: "admin@unionmate.com", role: "관리자" },
+  { id: 3, name: "세마리", email: "editor@unionmate.com", role: "편집자" },
 ];
 
 const generateInviteCode = () =>
@@ -165,7 +166,7 @@ const SettingMain = () => {
               </button>
             </div>
 
-            <div className="hidden md:grid md:grid-cols-[auto_1.5fr_1.8fr_auto] md:items-center md:gap-4 md:rounded-lg md:border md:border-transparent md:bg-transparent md:px-4 md:text-sm md:text-gray-500 md:[&>*]:py-2">
+            <div className="hidden md:grid md:grid-cols-[auto_1.2fr_1.1fr_1.7fr_auto] md:items-center md:gap-4 md:rounded-lg md:border md:border-transparent md:bg-transparent md:px-4 md:text-sm md:text-gray-500 md:[&>*]:py-2">
               <span>
                 <input
                   ref={masterCheckboxRef}
@@ -177,6 +178,7 @@ const SettingMain = () => {
                 />
               </span>
               <span>관리자명</span>
+              <span>역할</span>
               <span>이메일</span>
               <span className="text-right"> </span>
             </div>
@@ -190,7 +192,7 @@ const SettingMain = () => {
                 admins.map((admin) => (
                   <div
                     key={admin.id}
-                    className="grid grid-cols-[auto] items-center gap-4 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm shadow-sm md:grid-cols-[auto_1.5fr_1.8fr_auto]"
+                    className="grid grid-cols-[auto] items-center gap-4 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm shadow-sm md:grid-cols-[auto_1.2fr_1.1fr_1.7fr_auto]"
                   >
                     <label className="flex items-center gap-3">
                       <input
@@ -200,14 +202,21 @@ const SettingMain = () => {
                         className="h-4 w-4 cursor-pointer"
                         style={{ accentColor: "var(--primary)" }}
                       />
-                      <span className="text-base font-medium text-gray-900 md:hidden">
-                        {admin.name}
-                      </span>
+                      <div className="flex flex-col gap-1 text-base font-medium text-gray-900 md:hidden">
+                        <span>{admin.name}</span>
+                        <span className="text-13-medium text-primary">
+                          {admin.role}
+                        </span>
+                        <span className="text-sm text-gray-500">{admin.email}</span>
+                      </div>
                     </label>
                     <span className="hidden text-base font-medium text-gray-900 md:block">
                       {admin.name}
                     </span>
-                    <span className="text-sm text-gray-500 md:text-base">
+                    <span className="hidden text-sm font-medium text-primary md:block md:text-base">
+                      {admin.role}
+                    </span>
+                    <span className="text-sm text-gray-500 md:pl-4 md:text-base">
                       {admin.email}
                     </span>
                     <button
