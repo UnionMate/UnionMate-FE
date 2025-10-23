@@ -1,11 +1,7 @@
 import { EllipsisVertical } from "lucide-react";
 import clsx from "clsx";
-import {
-  KeyboardEvent,
-  MouseEvent,
-  SyntheticEvent,
-  useState,
-} from "react";
+import { useState } from "react";
+import type { KeyboardEvent, MouseEvent, SyntheticEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import type { RecruitCardData } from "../constants/recruitCardList";
 
@@ -73,14 +69,19 @@ const RecruitCard = ({ recruit }: RecruitCardProps) => {
         </div>
 
         {/* Bottom Section */}
-        <div className="flex justify-between items-center" onClick={stopPropagation}>
+        <div
+          className="flex justify-between items-center"
+          onClick={stopPropagation}
+        >
           <div className="text-sm text-gray-500">모집 게시</div>
           <button
             type="button"
             onClick={handleToggleRequest}
             className={clsx(
               "relative flex h-6 w-10 items-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
-              isPosted ? "bg-primary cursor-default" : "bg-gray-300 hover:bg-gray-400"
+              isPosted
+                ? "bg-primary cursor-default"
+                : "bg-gray-300 hover:bg-gray-400"
             )}
             aria-pressed={isPosted}
             aria-label="모집 게시 상태 변경"

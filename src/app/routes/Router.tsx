@@ -8,8 +8,8 @@ import VerifyCodePage from "@/pages/verifycode/VerifyCodePage";
 import DashboardLayout from "../layout/DashboardLayout";
 import RecruitPage from "@/pages/recruit/RecruitPage";
 import RecruitDetailPage from "@/pages/recruitdetail/RecruitDetailPage";
-import FormEditPage from "@/pages/formEdit/FormEditPage";
 import SettingPage from "@/pages/setting/SettingPage";
+import FormEditPage from "@/pages/formEdit/FormEditPage";
 
 export const router = createBrowserRouter([
   {
