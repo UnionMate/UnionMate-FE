@@ -1,10 +1,11 @@
 import FormEditMain from "@/widget/formEdit/ui/FormEditMain";
 import FormEditSidebar from "@/widget/formEdit/ui/FormEditSidebar";
-import { useCallback, useRef, useState } from "react";
-import type { QuestionConfig } from "@/widget/formEdit/ui/FormEditMain";
+import { useCallback, useRef } from "react";
+import { useFormEditContext } from "@/widget/formEdit/context/useFormEditContext";
+import type { QuestionConfig } from "@/widget/formEdit/types";
 
 const FormEditPage = () => {
-  const [questions, setQuestions] = useState<QuestionConfig[]>([]);
+  const { questions, setQuestions } = useFormEditContext();
   const questionRefs = useRef<Map<string, HTMLDivElement | null>>(new Map());
 
   const handleReorder = (reorderedQuestions: QuestionConfig[]) => {
@@ -52,8 +53,6 @@ const FormEditPage = () => {
         onRemoveQuestion={handleRemoveQuestion}
       />
       <FormEditMain
-        questions={questions}
-        setQuestions={setQuestions}
         registerQuestionRef={handleRegisterQuestionRef}
         onRemoveQuestion={handleRemoveQuestion}
       />

@@ -1,9 +1,22 @@
 import { ArrowLeft, Plus } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { createRecruitment } from "@/api/recruitment";
+import { convertFormDataToApiRequest } from "@/api/formDataConverter";
+import { useContext } from "react";
+import { FormEditContext } from "@/widget/formEdit/context/FormEditContext";
 
 const Header = () => {
   const location = useLocation();
   const navigate = useNavigate();
+
+  // FormEditContext가 존재하는지 확인
+  const formEditContext = useContext(FormEditContext);
+  const { formName, endDate, endTime, questions } = formEditContext || {
+    formName: "",
+    endDate: null,
+    endTime: "00:00",
+    questions: [],
+  };
 
   const isFormEditPage = location.pathname === "/applicationform/edit";
 
@@ -11,8 +24,58 @@ const Header = () => {
     navigate(-1);
   };
 
-  const handleCreate = () => {
-    navigate("/applicationform");
+  const handleCreate = async () => {
+    // FormEditContext가 없으면 실행하지 않음
+    if (!formEditContext) {
+      console.warn("FormEditContext가 없습니다.");
+      return;
+    }
+
+    // 유효성 검사
+    if (!formName.trim()) {
+      alert("지원서 제목을 입력해주세요.");
+      return;
+    }
+
+    if (!endDate) {
+      alert("지원 기간 종료일을 선택해주세요.");
+      return;
+    }
+
+    if (!endTime) {
+      alert("지원 기간 종료 시간을 선택해주세요.");
+      return;
+    }
+
+    if (questions.length === 0) {
+      alert("최소 1개 이상의 질문을 추가해주세요.");
+      return;
+    }
+
+    try {
+      // 폼 데이터를 API 형식으로 변환
+      const recruitmentData = convertFormDataToApiRequest(
+        formName.trim(),
+        endDate,
+        endTime,
+        questions
+      );
+
+      // API 호출
+      await createRecruitment(recruitmentData);
+
+      // 성공 시 페이지 이동
+      navigate("/applicationform");
+    } catch (error) {
+      console.error("지원서 양식 생성 실패:", error);
+
+      if (error instanceof Error && error.message.includes("403")) {
+        alert("로그인이 필요합니다. 먼저 로그인해주세요.");
+        navigate("/login");
+      } else {
+        alert("지원서 양식 생성에 실패했습니다. 다시 시도해주세요.");
+      }
+    }
   };
 
   return (
@@ -23,7 +86,7 @@ const Header = () => {
         </div>
       </div>
 
-      {isFormEditPage && (
+      {isFormEditPage && formEditContext && (
         <div className="flex items-center gap-3">
           <button
             type="button"

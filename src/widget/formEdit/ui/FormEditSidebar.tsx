@@ -1,4 +1,4 @@
-import type { QuestionConfig } from "./FormEditMain";
+import type { QuestionConfig } from "../types";
 import { GripVertical, Trash2 } from "lucide-react";
 import clsx from "clsx";
 import { useState } from "react";
@@ -69,8 +69,6 @@ const FormEditSidebar = ({
         return "단문형 답변";
       case "long-answer":
         return "장문형 답변";
-      case "level-check":
-        return "정도 체크";
       case "date-picker":
         return "날짜 선택";
       case "description":
@@ -90,8 +88,6 @@ const FormEditSidebar = ({
         return "bg-[#E8F5E9] text-[#4CAF50]";
       case "long-answer":
         return "bg-[#FFF3E0] text-[#FF9800]";
-      case "level-check":
-        return "bg-[#FCE4EC] text-[#E91E63]";
       case "date-picker":
         return "bg-[#E0F2F1] text-[#009688]";
       case "description":

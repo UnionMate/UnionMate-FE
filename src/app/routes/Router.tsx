@@ -9,7 +9,7 @@ import DashboardLayout from "../layout/DashboardLayout";
 import RecruitPage from "@/pages/recruit/RecruitPage";
 import RecruitDetailPage from "@/pages/recruitdetail/RecruitDetailPage";
 import SettingPage from "@/pages/setting/SettingPage";
-import FormEditPage from "@/pages/formEdit/FormEditPage";
+import FormEditPageWrapper from "@/pages/formEdit/FormEditPageWrapper";
 
 export const router = createBrowserRouter([
   {
@@ -88,7 +88,7 @@ export const router = createBrowserRouter([
     children: [
       {
         index: true,
-        element: <FormEditPage />,
+        element: <FormEditPageWrapper />,
       },
     ],
   },
