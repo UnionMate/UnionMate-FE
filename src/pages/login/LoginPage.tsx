@@ -9,6 +9,10 @@ const LoginPage = () => {
     navigate("/greeting");
   };
 
+  const handleSignup = () => {
+    navigate("/signup");
+  };
+
   return (
     <div className="flex items-center justify-center h-screen p-8 bg-white">
       <div className="w-full max-w-md space-y-6">
@@ -43,6 +47,19 @@ const LoginPage = () => {
           {/* 로그인 버튼 */}
           <div className="flex justify-center">
             <Button buttonText="로그인" onClick={handleLogin} />
+          </div>
+
+          {/* 회원가입 링크 */}
+          <div className="text-center">
+            <span className="text-gray-600 text-lg">
+              아직 계정이 없으신가요?{" "}
+              <button
+                onClick={handleSignup}
+                className="text-primary font-semibold hover:underline transition-colors duration-200"
+              >
+                회원가입
+              </button>
+            </span>
           </div>
         </div>
       </div>
