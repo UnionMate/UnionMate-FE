@@ -10,6 +10,10 @@ import RecruitPage from "@/pages/recruit/RecruitPage";
 import RecruitDetailPage from "@/pages/recruitdetail/RecruitDetailPage";
 import SettingPage from "@/pages/setting/SettingPage";
 import FormEditPageWrapper from "@/pages/formEdit/FormEditPageWrapper";
+import AdminLoginPage from "@/pages/admin/AdminLoginPage";
+import AdminRegisterPage from "@/pages/admin/register/AdminRegisterPage";
+import AdminGreetingPage from "@/pages/admin/greeting/AdminGreetingPage";
+import ApplicationListPage from "@/pages/applications/ApplicationListPage";
 
 export const router = createBrowserRouter([
   {
@@ -43,6 +47,35 @@ export const router = createBrowserRouter([
       {
         index: true,
         element: <CreateClubPage />,
+      },
+    ],
+  },
+  {
+    path: "/applications",
+    element: <RootLayout />,
+    children: [
+      {
+        index: true,
+        element: <ApplicationListPage />,
+      },
+    ],
+  },
+
+  {
+    path: "/admin",
+    element: <RootLayout />,
+    children: [
+      {
+        path: "greeting",
+        element: <AdminGreetingPage />,
+      },
+      {
+        path: "login",
+        element: <AdminLoginPage />,
+      },
+      {
+        path: "register",
+        element: <AdminRegisterPage />,
       },
     ],
   },

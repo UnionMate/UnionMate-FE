@@ -5,7 +5,7 @@ const LandingPage = () => {
   const navigate = useNavigate();
 
   const handleStartClick = () => {
-    navigate("/login");
+    navigate("/greeting");
   };
 
   return (
