@@ -15,11 +15,11 @@ const RecruitDetailPage = () => {
   const description = recruit?.description ?? "";
 
   return (
-    <div className="flex flex-col w-full h-full gap-4 py-6">
+    <div className="flex h-full w-full flex-col gap-4 py-6 overflow-hidden">
       <RecruitDetailHeader title={title} description={description} />
       <RecruitDetailSearch />
       <RecruitDetailMainHeader />
-      <div className="flex-1 min-h-0">
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
         <RecruitDetailMain />
       </div>
     </div>

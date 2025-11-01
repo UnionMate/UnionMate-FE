@@ -8,6 +8,7 @@ import VerifyCodePage from "@/pages/verifycode/VerifyCodePage";
 import DashboardLayout from "../layout/DashboardLayout";
 import RecruitPage from "@/pages/recruit/RecruitPage";
 import RecruitDetailPage from "@/pages/recruitdetail/RecruitDetailPage";
+import RecruitApplicantPage from "@/pages/recruitApplicant/RecruitApplicantPage";
 import SettingPage from "@/pages/setting/SettingPage";
 import FormEditPageWrapper from "@/pages/formEdit/FormEditPageWrapper";
 import AdminLoginPage from "@/pages/admin/AdminLoginPage";
@@ -101,6 +102,10 @@ export const router = createBrowserRouter([
       {
         path: "detail/:id",
         element: <RecruitDetailPage />,
+      },
+      {
+        path: "detail/:id/applicant/:applicantId",
+        element: <RecruitApplicantPage />,
       },
     ],
   },

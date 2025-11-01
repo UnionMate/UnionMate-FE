@@ -27,7 +27,7 @@ const Sidebar = ({ isCollapsed, onToggle }: SidebarProps) => {
   return (
     <div
       className={clsx(
-        "h-screen bg-gray-50 flex flex-col transition-all duration-500 ease-in-out",
+        "flex h-full flex-shrink-0 flex-col bg-gray-50 transition-all duration-500 ease-in-out",
         isCollapsed ? "w-20" : "w-64"
       )}
     >
