@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Button from "@/shared/components/Button";
+import { useManagerRegister } from "@/api/auth";
 
 const AdminRegisterPage = () => {
   const navigate = useNavigate();
@@ -9,6 +10,7 @@ const AdminRegisterPage = () => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+  const { mutate, isPending } = useManagerRegister();
 
   const handleRegister = () => {
     if (!name || !email || !password || !confirmPassword) {
@@ -22,7 +24,24 @@ const AdminRegisterPage = () => {
     }
 
     setErrorMessage("");
-    navigate("/admin/login");
+
+    mutate(
+      {
+        name,
+        email,
+        password,
+      },
+      {
+        onSuccess: () => {
+          navigate("/admin/greeting");
+        },
+        onError: (error: unknown) => {
+          const message =
+            error instanceof Error ? error.message : "회원가입에 실패했습니다.";
+          setErrorMessage(message);
+        },
+      }
+    );
   };
 
   return (
@@ -94,7 +113,10 @@ const AdminRegisterPage = () => {
         )}
 
         <div className="flex flex-col items-center space-y-4 pt-2">
-          <Button buttonText="회원가입" onClick={handleRegister} />
+          <Button
+            buttonText={isPending ? "처리 중..." : "회원가입"}
+            onClick={handleRegister}
+          />
           <button
             type="button"
             onClick={() => navigate("/admin/login")}

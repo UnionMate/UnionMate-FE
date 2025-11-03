@@ -13,10 +13,9 @@ export default defineConfig({
   },
   server: {
     proxy: {
-      "/api": {
+      "/backend": {
         target: "http://3.34.87.16:8000",
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, "/backend"),
       },
     },
   },

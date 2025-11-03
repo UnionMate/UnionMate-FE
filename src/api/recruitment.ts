@@ -1,4 +1,4 @@
-import { API_ENDPOINTS } from "./config";
+import { API_URLS } from "./config";
 
 export type RecruitmentItemType =
   | "TEXT"
@@ -52,7 +52,7 @@ export const createRecruitment = async (
     headers.Authorization = `Bearer ${token}`;
   }
 
-  const response = await fetch(API_ENDPOINTS.RECRUITMENT, {
+  const response = await fetch(API_URLS.RECRUITMENT, {
     method: "POST",
     headers,
     body: JSON.stringify(data),
