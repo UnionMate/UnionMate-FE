@@ -21,8 +21,8 @@ async function registerManager(
   payload: ManagerRegisterRequest
 ): Promise<ManagerRegisterResponse> {
   const { data } = await axios.post(API_URLS.MANAGER_REGISTER, payload, {
-    headers: { "Content-Type": "application/json" },
-    withCredentials: true,
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    withCredentials: false,
   });
 
   // accessToken 로컬스토리지 저장
