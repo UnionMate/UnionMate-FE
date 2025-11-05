@@ -1,4 +1,4 @@
-import { API_URLS } from "./config";
+import { API_URLS, getAuthHeaders } from "./config";
 
 export type RecruitmentItemType =
   | "TEXT"
@@ -39,18 +39,7 @@ export type CreateRecruitmentResponse = Record<string, unknown>;
 export const createRecruitment = async (
   data: CreateRecruitmentRequest
 ): Promise<CreateRecruitmentResponse> => {
-  // 로컬 스토리지에서 토큰 가져오기
-  const token =
-    localStorage.getItem("accessToken") || localStorage.getItem("token");
-
-  const headers: HeadersInit = {
-    "Content-Type": "application/json",
-  };
-
-  // 토큰이 있으면 Authorization 헤더 추가
-  if (token) {
-    headers.Authorization = `Bearer ${token}`;
-  }
+  const headers = getAuthHeaders();
 
   const response = await fetch(API_URLS.RECRUITMENT, {
     method: "POST",

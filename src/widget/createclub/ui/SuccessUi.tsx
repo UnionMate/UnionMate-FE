@@ -4,14 +4,18 @@ import { useNavigate } from "react-router-dom";
 
 interface SuccessUiProps {
   clubName: string;
+  councilId: number | null;
 }
 
-const SuccessUi = ({ clubName }: SuccessUiProps) => {
+const SuccessUi = ({ clubName, councilId }: SuccessUiProps) => {
   const navigate = useNavigate();
 
   const handleStart = () => {
-    navigate("/recruit");
-    console.log("시작하기 클릭");
+    if (councilId) {
+      navigate(`/${councilId}/recruit`);
+    } else {
+      navigate("/recruit");
+    }
   };
 
   return (

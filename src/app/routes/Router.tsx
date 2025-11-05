@@ -110,6 +110,24 @@ export const router = createBrowserRouter([
     ],
   },
   {
+    path: "/:councilId/recruit",
+    element: <DashboardLayout />,
+    children: [
+      {
+        index: true,
+        element: <RecruitPage />,
+      },
+      {
+        path: "detail/:id",
+        element: <RecruitDetailPage />,
+      },
+      {
+        path: "detail/:id/applicant/:applicantId",
+        element: <RecruitApplicantPage />,
+      },
+    ],
+  },
+  {
     path: "/setting",
     element: <DashboardLayout />,
     children: [

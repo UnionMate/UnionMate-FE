@@ -2,13 +2,15 @@ import Button from "@/shared/components/Button";
 import { PartyPopper } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { useCreateClub } from "@/api/createclub";
 
 interface InputUiProps {
-  onSuccess: (clubName: string) => void;
+  onSuccess: (councilId: number, councilName: string) => void;
 }
 
 const InputUi = ({ onSuccess }: InputUiProps) => {
   const [clubName, setClubName] = useState("");
+  const { mutate: createClub, isPending } = useCreateClub();
 
   const handleConfirm = () => {
     if (!clubName.trim()) {
@@ -22,9 +24,32 @@ const InputUi = ({ onSuccess }: InputUiProps) => {
       return;
     }
 
-    // 동아리 생성 로직
-    console.log("동아리 생성 확인:", clubName);
-    onSuccess(clubName);
+    // 학생회 생성 API 호출
+    createClub(
+      { name: clubName },
+      {
+        onSuccess: (response) => {
+          toast.success("학생회가 성공적으로 생성되었습니다.", {
+            position: "bottom-center",
+            style: {
+              background: "#374151",
+              color: "white",
+            },
+          });
+          onSuccess(response.data.councilId, response.data.councilName);
+        },
+        onError: (error) => {
+          console.error("학생회 생성 실패:", error);
+          toast.error("학생회 생성에 실패했습니다. 다시 시도해주세요.", {
+            position: "bottom-center",
+            style: {
+              background: "#374151",
+              color: "white",
+            },
+          });
+        },
+      }
+    );
   };
 
   return (
@@ -60,7 +85,11 @@ const InputUi = ({ onSuccess }: InputUiProps) => {
 
           {/* 확인 버튼 */}
           <div className="flex justify-center mt-8">
-            <Button buttonText="확인" onClick={handleConfirm} />
+            <Button
+              buttonText={isPending ? "생성 중..." : "확인"}
+              onClick={handleConfirm}
+              disabled={isPending || !clubName.trim()}
+            />
           </div>
         </div>
       </div>
