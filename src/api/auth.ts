@@ -22,7 +22,7 @@ async function registerManager(
 ): Promise<ManagerRegisterResponse> {
   const { data } = await axios.post(API_URLS.MANAGER_REGISTER, payload, {
     headers: { "Content-Type": "application/json", Accept: "application/json" },
-    withCredentials: false,
+    withCredentials: true,
   });
 
   // accessToken 로컬스토리지 저장
