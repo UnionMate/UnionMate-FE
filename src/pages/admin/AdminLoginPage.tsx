@@ -2,11 +2,13 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Mail, Lock } from "lucide-react";
 import Button from "@/shared/components/Button";
+import { useManagerLogin } from "@/api/auth";
 
 const AdminEmailLoginPage = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const { mutate: login, isPending } = useManagerLogin();
 
   return (
     <div className="flex items-center justify-center h-screen p-8 bg-white">
@@ -43,8 +45,24 @@ const AdminEmailLoginPage = () => {
 
           <div className="flex justify-center">
             <Button
-              buttonText="로그인"
-              onClick={() => navigate("/admin/greeting")}
+              buttonText={isPending ? "로그인 중..." : "로그인"}
+              onClick={() => {
+                login(
+                  { email, password },
+                  {
+                    onSuccess: () => {
+                      navigate("/admin/greeting");
+                    },
+                    onError: (error) => {
+                      console.error("로그인 실패:", error);
+                      alert(
+                        "로그인에 실패했습니다. 이메일과 비밀번호를 확인해주세요."
+                      );
+                    },
+                  }
+                );
+              }}
+              disabled={isPending || !email || !password}
             />
           </div>
 
