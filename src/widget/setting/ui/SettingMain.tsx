@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Copy, MailOpen, RefreshCw } from "lucide-react";
+import { useParams } from "react-router-dom";
+import { useGetCouncilMembers } from "@/api/getCouncilMembers";
 
 type TabKey = "admins" | "invite";
 
@@ -10,11 +12,9 @@ interface AdminInfo {
   role: string;
 }
 
-const initialAdmins: AdminInfo[] = [
-  { id: 1, name: "한마리", email: "owner@unionmate.com", role: "소유자" },
-  { id: 2, name: "두마리", email: "admin@unionmate.com", role: "관리자" },
-  { id: 3, name: "세마리", email: "editor@unionmate.com", role: "편집자" },
-];
+const mapRole = (councilRole: "VICE" | "MANAGER"): string => {
+  return councilRole === "VICE" ? "소유자" : "관리자";
+};
 
 const generateInviteCode = () =>
   `UM-${Math.random()
@@ -26,35 +26,60 @@ const generateInviteCode = () =>
     .toUpperCase()}`;
 
 const SettingMain = () => {
+  const { councilId } = useParams<{ councilId: string }>();
   const [activeTab, setActiveTab] = useState<TabKey>("admins");
-  const [admins, setAdmins] = useState(initialAdmins);
   const [selectedAdminIds, setSelectedAdminIds] = useState<number[]>([]);
   const [inviteCode, setInviteCode] = useState(generateInviteCode());
   const [inviteMessage, setInviteMessage] = useState("");
-  const [remainingSeconds, setRemainingSeconds] = useState(60 * 60);
+
+  const { data: membersData, isLoading } = useGetCouncilMembers(councilId);
+
+  const admins: AdminInfo[] = useMemo(() => {
+    if (!membersData?.data) return [];
+    return membersData.data.map((member) => ({
+      id: member.councilManagerId,
+      name: member.memberName,
+      email: member.memberEmail,
+      role: mapRole(member.councilRole),
+    }));
+  }, [membersData]);
 
   const masterCheckboxRef = useRef<HTMLInputElement>(null);
 
-  const allSelected = useMemo(
-    () => admins.length > 0 && selectedAdminIds.length === admins.length,
-    [admins.length, selectedAdminIds.length]
-  );
+  const allSelected = useMemo(() => {
+    const selectableAdmins = admins.filter((admin) => admin.role !== "소유자");
+    return (
+      selectableAdmins.length > 0 &&
+      selectedAdminIds.length === selectableAdmins.length
+    );
+  }, [admins, selectedAdminIds.length]);
 
   useEffect(() => {
     if (!masterCheckboxRef.current) return;
+    const selectableAdmins = admins.filter((admin) => admin.role !== "소유자");
     masterCheckboxRef.current.indeterminate =
-      selectedAdminIds.length > 0 && selectedAdminIds.length < admins.length;
-  }, [admins.length, selectedAdminIds.length]);
+      selectedAdminIds.length > 0 &&
+      selectedAdminIds.length < selectableAdmins.length;
+  }, [admins, selectedAdminIds.length]);
 
   const toggleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedAdminIds(admins.map((admin) => admin.id));
+      // 소유자를 제외한 관리자만 선택
+      setSelectedAdminIds(
+        admins
+          .filter((admin) => admin.role !== "소유자")
+          .map((admin) => admin.id)
+      );
     } else {
       setSelectedAdminIds([]);
     }
   };
 
   const toggleSelectOne = (id: number) => {
+    const admin = admins.find((a) => a.id === id);
+    // 소유자는 선택할 수 없음
+    if (admin?.role === "소유자") return;
+
     setSelectedAdminIds((prev) =>
       prev.includes(id)
         ? prev.filter((adminId) => adminId !== id)
@@ -64,15 +89,12 @@ const SettingMain = () => {
 
   const handleDeleteSelected = () => {
     if (selectedAdminIds.length === 0) return;
-
-    setAdmins((prev) =>
-      prev.filter((admin) => !selectedAdminIds.includes(admin.id))
-    );
+    // TODO: API 호출로 삭제 처리
     setSelectedAdminIds([]);
   };
 
   const handleDeleteSingle = (id: number) => {
-    setAdmins((prev) => prev.filter((admin) => admin.id !== id));
+    // TODO: API 호출로 삭제 처리
     setSelectedAdminIds((prev) => prev.filter((adminId) => adminId !== id));
   };
 
@@ -97,28 +119,7 @@ const SettingMain = () => {
     setInviteCode(generateInviteCode());
     setInviteMessage("새 초대 코드가 발급되었어요.");
     setTimeout(() => setInviteMessage(""), 2500);
-    setRemainingSeconds(60 * 60);
   };
-
-  useEffect(() => {
-    if (activeTab !== "invite") return;
-
-    const timerId = setInterval(() => {
-      setRemainingSeconds((prev) => (prev > 0 ? prev - 1 : 0));
-    }, 1000);
-
-    return () => {
-      clearInterval(timerId);
-    };
-  }, [activeTab]);
-
-  const formattedTime = useMemo(() => {
-    const minutes = Math.floor(remainingSeconds / 60)
-      .toString()
-      .padStart(2, "0");
-    const seconds = (remainingSeconds % 60).toString().padStart(2, "0");
-    return `${minutes}:${seconds}`;
-  }, [remainingSeconds]);
 
   const selectedCount = selectedAdminIds.length;
 
@@ -184,7 +185,11 @@ const SettingMain = () => {
             </div>
 
             <div className="flex flex-col gap-3">
-              {admins.length === 0 ? (
+              {isLoading ? (
+                <div className="flex h-32 items-center justify-center rounded-lg border border-dashed border-gray-300 bg-gray-50 text-sm text-gray-500">
+                  로딩 중...
+                </div>
+              ) : admins.length === 0 ? (
                 <div className="flex h-32 items-center justify-center rounded-lg border border-dashed border-gray-300 bg-gray-50 text-sm text-gray-500">
                   초대된 관리자가 없습니다.
                 </div>
@@ -199,15 +204,22 @@ const SettingMain = () => {
                         type="checkbox"
                         checked={selectedAdminIds.includes(admin.id)}
                         onChange={() => toggleSelectOne(admin.id)}
-                        className="h-4 w-4 cursor-pointer"
-                        style={{ accentColor: "var(--primary)" }}
+                        disabled={admin.role === "소유자"}
+                        className="h-4 w-4"
+                        style={{
+                          accentColor: "var(--primary)",
+                          cursor:
+                            admin.role === "소유자" ? "not-allowed" : "pointer",
+                        }}
                       />
                       <div className="flex flex-col gap-1 text-base font-medium text-gray-900 md:hidden">
                         <span>{admin.name}</span>
                         <span className="text-13-medium text-primary">
                           {admin.role}
                         </span>
-                        <span className="text-sm text-gray-500">{admin.email}</span>
+                        <span className="text-sm text-gray-500">
+                          {admin.email}
+                        </span>
                       </div>
                     </label>
                     <span className="hidden text-base font-medium text-gray-900 md:block">
@@ -219,13 +231,18 @@ const SettingMain = () => {
                     <span className="text-sm text-gray-500 md:pl-4 md:text-base">
                       {admin.email}
                     </span>
-                    <button
-                      type="button"
-                      onClick={() => handleDeleteSingle(admin.id)}
-                      className="justify-self-end text-sm font-medium text-red-500 transition hover:underline"
-                    >
-                      삭제
-                    </button>
+                    {admin.role !== "소유자" && (
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteSingle(admin.id)}
+                        className="justify-self-end text-sm font-medium text-red-500 transition hover:underline"
+                      >
+                        삭제
+                      </button>
+                    )}
+                    {admin.role === "소유자" && (
+                      <span className="justify-self-end"></span>
+                    )}
                   </div>
                 ))
               )}
@@ -239,17 +256,11 @@ const SettingMain = () => {
               </div>
               <div className="space-y-2">
                 <p className="text-16-semibold text-gray-900">
-                  관리자 코드의 유효시간은 1시간 입니다.
-                </p>
-                <p className="text-14-regular text-gray-500">
-                  시간이 만료되면 코드를 재발급 해주세요.
+                  초대 코드를 학생회 인원에게 공유하여 가입시켜주세요.
                 </p>
               </div>
               <div className="flex w-full max-w-md flex-col items-center gap-4">
                 <div className="flex w-full items-center gap-3 rounded-2xl bg-white px-4 py-3 shadow">
-                  <span className="text-14-semibold text-error">
-                    {formattedTime}
-                  </span>
                   <input
                     readOnly
                     value={inviteCode}
@@ -274,7 +285,9 @@ const SettingMain = () => {
                     복사
                   </button>
                   {inviteMessage && (
-                    <p className="text-14-semibold text-primary">{inviteMessage}</p>
+                    <p className="text-14-semibold text-primary">
+                      {inviteMessage}
+                    </p>
                   )}
                 </div>
               </div>

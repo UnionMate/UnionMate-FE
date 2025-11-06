@@ -152,8 +152,8 @@ const FormEditMain = ({
   onRemoveQuestion,
 }: FormEditMainProps) => {
   const {
-    formName,
-    setFormName,
+    name,
+    setName,
     endDate,
     setEndDate,
     endTime,
@@ -346,8 +346,8 @@ const FormEditMain = ({
     <div className="flex h-full w-full gap-6 bg-black-15 px-10 pt-10 pb-24 overflow-y-auto">
       <div className="flex h-full w-full flex-col gap-6 pb-12">
         <input
-          value={formName}
-          onChange={(event) => setFormName(event.target.value)}
+          value={name}
+          onChange={(event) => setName(event.target.value)}
           className="w-full rounded-xl bg-white px-5 py-4 text-title-16-semibold text-black-100 shadow-sm placeholder:text-black-35 focus:outline-none focus:ring-2 focus:ring-primary/60"
           placeholder="지원서 양식의 제목을 입력해주세요"
         />

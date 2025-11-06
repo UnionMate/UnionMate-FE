@@ -1,12 +1,7 @@
 import FormEditPage from "./FormEditPage";
-import { FormEditProvider } from "@/widget/formEdit/context/FormEditProvider";
 
 const FormEditPageWrapper = () => {
-  return (
-    <FormEditProvider>
-      <FormEditPage />
-    </FormEditProvider>
-  );
+  return <FormEditPage />;
 };
 
 export default FormEditPageWrapper;

@@ -2,8 +2,8 @@ import { createContext } from "react";
 import type { QuestionConfig } from "../types";
 
 export type FormEditContextValue = {
-  formName: string;
-  setFormName: (value: string) => void;
+  name: string;
+  setName: (value: string) => void;
   endDate: Date | null;
   setEndDate: (value: Date | null) => void;
   endTime: string;

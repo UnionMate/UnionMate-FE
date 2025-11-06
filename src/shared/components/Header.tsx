@@ -1,24 +1,22 @@
 import { ArrowLeft, Plus } from "lucide-react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { createRecruitment } from "@/api/recruitment";
 import { convertFormDataToApiRequest } from "@/api/formDataConverter";
 import { useContext } from "react";
 import { FormEditContext } from "@/widget/formEdit/context/FormEditContext";
+import { toast } from "sonner";
 
 const Header = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { councilId } = useParams<{ councilId: string }>();
 
   // FormEditContext가 존재하는지 확인
   const formEditContext = useContext(FormEditContext);
-  const { formName, endDate, endTime, questions } = formEditContext || {
-    formName: "",
-    endDate: null,
-    endTime: "00:00",
-    questions: [],
-  };
 
-  const isFormEditPage = location.pathname === "/applicationform/edit";
+  const isFormEditPage =
+    location.pathname === "/applicationform/edit" ||
+    location.pathname.includes("/applicationform/edit");
 
   const handleBack = () => {
     navigate(-1);
@@ -31,23 +29,29 @@ const Header = () => {
       return;
     }
 
+    // formEditContext에서 최신 값 가져오기
+    const currentName = formEditContext.name;
+    const currentEndDate = formEditContext.endDate;
+    const currentEndTime = formEditContext.endTime;
+    const currentQuestions = formEditContext.questions;
+
     // 유효성 검사
-    if (!formName.trim()) {
+    if (!currentName || !currentName.trim()) {
       alert("지원서 제목을 입력해주세요.");
       return;
     }
 
-    if (!endDate) {
+    if (!currentEndDate) {
       alert("지원 기간 종료일을 선택해주세요.");
       return;
     }
 
-    if (!endTime) {
+    if (!currentEndTime) {
       alert("지원 기간 종료 시간을 선택해주세요.");
       return;
     }
 
-    if (questions.length === 0) {
+    if (currentQuestions.length === 0) {
       alert("최소 1개 이상의 질문을 추가해주세요.");
       return;
     }
@@ -55,17 +59,24 @@ const Header = () => {
     try {
       // 폼 데이터를 API 형식으로 변환
       const recruitmentData = convertFormDataToApiRequest(
-        formName.trim(),
-        endDate,
-        endTime,
-        questions
+        currentName.trim(),
+        currentEndDate,
+        currentEndTime,
+        currentQuestions
       );
 
       // API 호출
       await createRecruitment(recruitmentData);
 
+      // 성공 토스트 표시
+      toast.success("모집 지원서 생성이 완료되었습니다.");
+
       // 성공 시 페이지 이동
-      navigate("/applicationform");
+      if (councilId) {
+        navigate(`/${councilId}/recruit`);
+      } else {
+        navigate("/applicationform");
+      }
     } catch (error) {
       console.error("지원서 양식 생성 실패:", error);
 
@@ -102,7 +113,7 @@ const Header = () => {
             className="flex items-center gap-2 rounded-xl bg-primary px-5 py-2 text-title-14-semibold text-white transition hover:opacity-90"
           >
             <Plus className="h-4 w-4" />
-            <span>지원서 양식 생성</span>
+            <span>모집 생성하기</span>
           </button>
         </div>
       )}

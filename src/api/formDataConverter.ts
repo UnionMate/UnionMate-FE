@@ -82,7 +82,7 @@ const convertQuestionToApiItem = (
  * 폼 에디터 데이터를 API 요청 형식으로 변환
  */
 export const convertFormDataToApiRequest = (
-  formName: string,
+  name: string,
   endDate: Date | null,
   endTime: string,
   questions: QuestionConfig[]
@@ -102,7 +102,7 @@ export const convertFormDataToApiRequest = (
   );
 
   return {
-    name: formName,
+    name,
     endAt,
     isActive: false,
     recruitmentStatus: "DOCUMENT_SCREENING",

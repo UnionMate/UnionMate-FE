@@ -6,7 +6,9 @@ import { useLocation } from "react-router-dom";
 
 const RootLayout = () => {
   const location = useLocation();
-  const isFormEditPage = location.pathname === "/applicationform/edit";
+  const isFormEditPage =
+    location.pathname === "/applicationform/edit" ||
+    location.pathname.includes("/applicationform/edit");
 
   if (isFormEditPage) {
     return (

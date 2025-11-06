@@ -8,6 +8,7 @@ export const API_URLS = {
   MANAGER_LOGIN: "/backend/auth/manager/login",
   CREATE_CLUB: "/backend/councils",
   CHANGE_COUNCIL_NAME: "/backend/councils/:councilId/names",
+  GET_COUNCIL_MEMBERS: "/backend/councils/:councilId/members",
 } as const;
 
 export const getApiUrl = (endpoint: string): string => {

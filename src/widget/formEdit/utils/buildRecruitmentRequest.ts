@@ -7,7 +7,7 @@ import { FIXED_FIELDS } from "../constants";
 import type { QuestionConfig } from "../types";
 
 type BuildRecruitmentRequestParams = {
-  formName: string;
+  name: string;
   startDate: Date | null;
   startTime: string;
   endDate: Date | null;
@@ -111,14 +111,14 @@ const mapQuestionToItem = (
 };
 
 export const buildCreateRecruitmentRequest = ({
-  formName,
+  name,
   startDate,
   startTime,
   endDate,
   endTime,
   questions,
 }: BuildRecruitmentRequestParams): CreateRecruitmentRequest => {
-  const name = formName.trim().length > 0 ? formName.trim() : "무제 지원서";
+  const trimmedName = name.trim().length > 0 ? name.trim() : "무제 지원서";
 
   const startAt = mergeDateAndTime(startDate, startTime);
   const endAt = mergeDateAndTime(endDate, endTime);
@@ -143,7 +143,7 @@ export const buildCreateRecruitmentRequest = ({
   const items = [...fixedItems, ...dynamicItems];
 
   const request: CreateRecruitmentRequest = {
-    name,
+    name: trimmedName,
     items,
   };
 

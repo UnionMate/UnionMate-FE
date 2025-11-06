@@ -8,7 +8,7 @@ type FormEditProviderProps = {
 };
 
 export const FormEditProvider = ({ children }: FormEditProviderProps) => {
-  const [formName, setFormName] = useState("");
+  const [name, setName] = useState("");
   const [endDate, setEndDate] = useState<Date | null>(null);
   const [endTime, setEndTime] = useState("00:00");
   const [questions, setQuestions] = useState<QuestionConfig[]>([]);
@@ -19,15 +19,15 @@ export const FormEditProvider = ({ children }: FormEditProviderProps) => {
   }, []);
 
   const resetAll = useCallback(() => {
-    setFormName("");
+    setName("");
     resetPeriod();
     setQuestions([]);
   }, [resetPeriod]);
 
   const value = useMemo<FormEditContextValue>(
     () => ({
-      formName,
-      setFormName,
+      name,
+      setName,
       endDate,
       setEndDate,
       endTime,
@@ -37,7 +37,7 @@ export const FormEditProvider = ({ children }: FormEditProviderProps) => {
       resetPeriod,
       resetAll,
     }),
-    [formName, endDate, endTime, questions, resetPeriod, resetAll]
+    [name, endDate, endTime, questions, resetPeriod, resetAll]
   );
 
   return (

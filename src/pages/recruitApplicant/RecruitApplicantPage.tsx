@@ -2,10 +2,7 @@ import { useMemo } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import RecruitApplicantMain from "@/widget/recruitApplicant/ui/RecruitApplicantMain";
-import {
-  REVIEWER_DISPLAY_NAME,
-  findApplicantById,
-} from "@/widget/recruitdetail/constants/applicants";
+import { findApplicantById } from "@/widget/recruitdetail/constants/applicants";
 import type { ApplicantDetail } from "@/widget/recruitdetail/types";
 
 interface ApplicantLocationState {
@@ -50,9 +47,6 @@ const RecruitApplicantPage = () => {
               <ArrowLeft className="h-4 w-4" />
               돌아가기
             </button>
-            <span className="text-xs text-gray-400">
-              담당자 메모 기본 작성자: {REVIEWER_DISPLAY_NAME}
-            </span>
           </div>
         </div>
 

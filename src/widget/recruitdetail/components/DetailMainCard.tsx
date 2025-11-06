@@ -239,33 +239,6 @@ const DetailMainCard = ({
         </section>
 
         <section className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
-          <h3 className="text-sm font-semibold text-gray-900">응원 평가</h3>
-          <div className="mt-4 grid grid-cols-3 gap-3 text-center">
-            <div className="rounded-xl bg-primary/5 px-3 py-4">
-              <span className="text-2xl">👍</span>
-              <p className="mt-2 text-sm font-semibold text-gray-900">
-                {applicant.reactions.cheer}
-              </p>
-              <p className="text-xs text-gray-500">응원해요</p>
-            </div>
-            <div className="rounded-xl bg-primary/5 px-3 py-4">
-              <span className="text-2xl">😍</span>
-              <p className="mt-2 text-sm font-semibold text-gray-900">
-                {applicant.reactions.impressed}
-              </p>
-              <p className="text-xs text-gray-500">잘했어요</p>
-            </div>
-            <div className="rounded-xl bg-primary/5 px-3 py-4">
-              <span className="text-2xl">🤔</span>
-              <p className="mt-2 text-sm font-semibold text-gray-900">
-                {applicant.reactions.curious}
-              </p>
-              <p className="text-xs text-gray-500">더 궁금해요</p>
-            </div>
-          </div>
-        </section>
-
-        <section className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
           <h3 className="text-sm font-semibold text-gray-900">메모</h3>
           <textarea
             value={memoInput}
