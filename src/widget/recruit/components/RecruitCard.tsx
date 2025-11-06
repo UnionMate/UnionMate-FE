@@ -3,6 +3,8 @@ import clsx from "clsx";
 import { useState } from "react";
 import type { KeyboardEvent, MouseEvent, SyntheticEvent } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { activateRecruitment } from "@/api/recruitment";
 import type { RecruitCardData } from "../constants/recruitCardList";
 
 interface RecruitCardProps {
@@ -12,9 +14,24 @@ interface RecruitCardProps {
 const RecruitCard = ({ recruit }: RecruitCardProps) => {
   const navigate = useNavigate();
   const { councilId } = useParams<{ councilId: string }>();
-  const { id, title, description } = recruit;
+  const { id, name, isActive } = recruit;
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isPosted, setIsPosted] = useState(Boolean(recruit.isPosted));
+  const [isPosted, setIsPosted] = useState(isActive);
+  const queryClient = useQueryClient();
+
+  const { mutate: activateRecruit, isPending } = useMutation({
+    mutationFn: () => activateRecruitment(id, { active: true }),
+    onSuccess: (response) => {
+      setIsPosted(response.data.active);
+      setIsModalOpen(false);
+      // recruitments 목록 새로고침
+      queryClient.invalidateQueries({ queryKey: ["recruitments"] });
+    },
+    onError: (error) => {
+      console.error("모집 게시 실패:", error);
+      alert("모집 게시에 실패했습니다. 다시 시도해주세요.");
+    },
+  });
 
   const handleNavigate = () => {
     if (councilId) {
@@ -43,8 +60,7 @@ const RecruitCard = ({ recruit }: RecruitCardProps) => {
   const handleModalConfirm = (event: MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
     event.stopPropagation();
-    setIsPosted(true);
-    setIsModalOpen(false);
+    activateRecruit();
   };
 
   const handleModalCancel = (event: MouseEvent<HTMLButtonElement>) => {
@@ -65,10 +81,9 @@ const RecruitCard = ({ recruit }: RecruitCardProps) => {
         {/* Top Section */}
         <div className="flex flex-col gap-1">
           <div className="flex justify-between items-center">
-            <div className="text-base font-bold text-gray-800">{title}</div>
+            <div className="text-base font-bold text-gray-800">{name}</div>
             <EllipsisVertical className="w-5 h-5 text-gray-400" />
           </div>
-          <div className="text-sm text-gray-500">{description}</div>
         </div>
 
         {/* Bottom Section */}
@@ -136,9 +151,10 @@ const RecruitCard = ({ recruit }: RecruitCardProps) => {
               <button
                 type="button"
                 onClick={handleModalConfirm}
-                className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                disabled={isPending}
+                className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                확인
+                {isPending ? "처리 중..." : "확인"}
               </button>
             </div>
           </div>
