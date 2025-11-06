@@ -50,8 +50,17 @@ const AdminEmailLoginPage = () => {
                 login(
                   { email, password },
                   {
-                    onSuccess: () => {
-                      navigate("/admin/greeting");
+                    onSuccess: (response) => {
+                      // councilId가 있고 0이 아니면 해당 학생회 모집 페이지로 이동
+                      if (
+                        response.data.councilId &&
+                        response.data.councilId !== 0
+                      ) {
+                        navigate(`/${response.data.councilId}/recruit`);
+                      } else {
+                        // councilId가 없으면 학생회 생성 페이지로 이동
+                        navigate("/admin/greeting");
+                      }
                     },
                     onError: (error) => {
                       console.error("로그인 실패:", error);

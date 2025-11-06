@@ -28,6 +28,7 @@ export type ManagerLoginResponse = {
   data: {
     accessToken: string;
     refreshToken: string;
+    councilId: number;
   };
 };
 
