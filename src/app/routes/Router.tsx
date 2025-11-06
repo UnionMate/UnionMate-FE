@@ -92,24 +92,6 @@ export const router = createBrowserRouter([
   },
   // DashboardLayout을 사용하는 공통 경로들
   {
-    path: "/recruit",
-    element: <DashboardLayout />,
-    children: [
-      {
-        index: true,
-        element: <RecruitPage />,
-      },
-      {
-        path: "detail/:id",
-        element: <RecruitDetailPage />,
-      },
-      {
-        path: "detail/:id/applicant/:applicantId",
-        element: <RecruitApplicantPage />,
-      },
-    ],
-  },
-  {
     path: "/:councilId/recruit",
     element: <DashboardLayout />,
     children: [
@@ -128,7 +110,7 @@ export const router = createBrowserRouter([
     ],
   },
   {
-    path: "/setting",
+    path: "/:councilId/setting",
     element: <DashboardLayout />,
     children: [
       {
@@ -137,9 +119,8 @@ export const router = createBrowserRouter([
       },
     ],
   },
-  // RootLayout을 사용하는 경로
   {
-    path: "/applicationform/edit",
+    path: "/:councilId/applicationform/edit",
     element: <RootLayout />,
     children: [
       {

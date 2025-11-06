@@ -7,6 +7,7 @@ export const API_URLS = {
   MANAGER_REGISTER: "/backend/auth/manager/register",
   MANAGER_LOGIN: "/backend/auth/manager/login",
   CREATE_CLUB: "/backend/councils",
+  CHANGE_COUNCIL_NAME: "/backend/councils/:councilId/names",
 } as const;
 
 export const getApiUrl = (endpoint: string): string => {

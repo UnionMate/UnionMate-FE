@@ -2,14 +2,23 @@ import Button from "@/shared/components/Button";
 import { Flag } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
-const CodeSuccessUi = () => {
+interface CodeSuccessUiProps {
+  councilName?: string;
+  councilId?: number | string;
+}
+
+const CodeSuccessUi = ({ councilName, councilId }: CodeSuccessUiProps) => {
   const navigate = useNavigate();
 
   const handleStart = () => {
-    navigate("/recruit");
-    // 시작하기 로직
-    console.log("시작하기 클릭");
+    if (councilId) {
+      navigate(`/${councilId}/recruit`);
+    }
   };
+
+  // 로컬스토리지에서 학생회 이름을 가져오거나 props로 받은 값을 사용
+  const displayName =
+    councilName || localStorage.getItem("councilName") || "학생회";
 
   return (
     <div className="w-full space-y-8 text-center">
@@ -23,16 +32,17 @@ const CodeSuccessUi = () => {
       {/* 환영 메시지 */}
       <div className="space-y-4">
         <h1 className="text-3xl font-bold text-gray-900">
-          <span className="text-primary">000</span>의 관리자님, 반가워요!
+          <span className="text-primary">{displayName}</span>의 관리자님,
+          반가워요!
         </h1>
         <p className="text-2xl font-bold text-gray-900 tracking-wide">
-          지금부터 UnionMate에서 동아리를 모집하고 관리해요.
+          지금부터 UnionMate에서 학생회를 모집하고 관리해요.
         </p>
         <p className="text-sm text-gray-500">
           모집 리스트에서 현재 진행 중인 모집을 확인할 수 있습니다.
         </p>
         <p className="text-sm text-gray-500">
-          다른 관리자들과 함께 동아리 모집을 시작해보세요!
+          다른 관리자들과 함께 학생회 모집을 시작해보세요!
         </p>
       </div>
 

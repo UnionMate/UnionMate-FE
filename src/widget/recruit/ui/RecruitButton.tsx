@@ -1,15 +1,18 @@
 import { Plus } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 
 const RecruitButton = () => {
   const navigate = useNavigate();
+  const { councilId } = useParams<{ councilId: string }>();
 
   return (
     <div className="flex justify-end">
       <button
         className="flex px-3 py-1 bg-primary rounded-sm cursor-pointer"
         onClick={() => {
-          navigate("/applicationform/edit");
+          if (councilId) {
+            navigate(`/${councilId}/applicationform/edit`);
+          }
         }}
       >
         <div className="flex gap-1 items-center justify-center">

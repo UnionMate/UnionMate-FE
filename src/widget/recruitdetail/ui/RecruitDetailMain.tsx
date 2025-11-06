@@ -10,7 +10,7 @@ import type { ApplicantDetail } from "../types";
 
 const RecruitDetailMain = () => {
   const navigate = useNavigate();
-  const { id } = useParams<{ id: string }>();
+  const { councilId, id } = useParams<{ councilId: string; id: string }>();
 
   const applicants = useMemo(() => createInitialApplicants(), []);
 
@@ -27,11 +27,11 @@ const RecruitDetailMain = () => {
   };
 
   const handleNavigateApplicant = (applicant: ApplicantDetail) => {
-    if (!id) {
+    if (!id || !councilId) {
       return;
     }
 
-    navigate(`/recruit/detail/${id}/applicant/${applicant.id}`, {
+    navigate(`/${councilId}/recruit/detail/${id}/applicant/${applicant.id}`, {
       state: { applicant },
     });
   };

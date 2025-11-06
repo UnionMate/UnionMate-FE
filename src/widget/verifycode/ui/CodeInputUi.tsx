@@ -4,7 +4,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 interface CodeInputUiProps {
-  onSuccess: () => void;
+  onSuccess: (councilName?: string) => void;
 }
 
 const CodeInputUi = ({ onSuccess }: CodeInputUiProps) => {

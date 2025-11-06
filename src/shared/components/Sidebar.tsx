@@ -1,13 +1,8 @@
 import clsx from "clsx";
-import {
-  ChevronLeft,
-  Mail,
-  Settings,
-  Users,
-  ChevronRight,
-  User,
-} from "lucide-react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { ChevronLeft, Settings, Users, ChevronRight, User } from "lucide-react";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { decodeJWT } from "@/lib/utils";
+import { useMemo } from "react";
 
 interface SidebarProps {
   isCollapsed: boolean;
@@ -17,11 +12,43 @@ interface SidebarProps {
 const Sidebar = ({ isCollapsed, onToggle }: SidebarProps) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { councilId } = useParams<{ councilId: string }>();
+
+  // accessToken에서 사용자 정보 가져오기
+  const userInfo = useMemo(() => {
+    const token =
+      localStorage.getItem("accessToken") || localStorage.getItem("token");
+    if (!token) {
+      return { username: "", email: "" };
+    }
+    const decoded = decodeJWT(token);
+    if (!decoded) {
+      console.warn("JWT 디코딩 실패 또는 토큰이 없습니다.");
+      return { username: "", email: "" };
+    }
+
+    // 디버깅을 위한 로그 (개발 환경에서만)
+    if (process.env.NODE_ENV === "development") {
+      console.log("디코딩된 JWT payload:", decoded);
+    }
+
+    return {
+      username: String(decoded.username || ""),
+      email: String(decoded.email || ""),
+    };
+  }, []);
 
   const menuItems = [
-    { icon: Users, label: "모집", path: "/recruit" },
-    { icon: Mail, label: "메일 템플릿" },
-    { icon: Settings, label: "동아리 관리", path: "/setting" },
+    {
+      icon: Users,
+      label: "모집",
+      path: councilId ? `/${councilId}/recruit` : undefined,
+    },
+    {
+      icon: Settings,
+      label: "동아리 관리",
+      path: councilId ? `/${councilId}/setting` : undefined,
+    },
   ];
 
   return (
@@ -50,8 +77,12 @@ const Sidebar = ({ isCollapsed, onToggle }: SidebarProps) => {
               <User className="w-6 h-6 text-white" />
             </div>
             <div className="flex flex-col">
-              <span className="font-bold text-black">홍길동</span>
-              <span className="text-sm text-gray-500">email@gmail.com</span>
+              <span className="font-bold text-black">
+                {userInfo.username || "사용자"}
+              </span>
+              <span className="text-sm text-gray-500">
+                {userInfo.email || "email@example.com"}
+              </span>
             </div>
           </div>
         </div>
@@ -61,7 +92,8 @@ const Sidebar = ({ isCollapsed, onToggle }: SidebarProps) => {
       <div className="flex-1 px-4">
         {menuItems.map((item, index) => {
           const isActive = item.path
-            ? location.pathname.startsWith(item.path)
+            ? location.pathname === item.path ||
+              location.pathname.startsWith(item.path)
             : false;
 
           return (

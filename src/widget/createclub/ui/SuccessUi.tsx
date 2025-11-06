@@ -13,8 +13,6 @@ const SuccessUi = ({ clubName, councilId }: SuccessUiProps) => {
   const handleStart = () => {
     if (councilId) {
       navigate(`/${councilId}/recruit`);
-    } else {
-      navigate("/recruit");
     }
   };
 

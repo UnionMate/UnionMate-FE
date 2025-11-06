@@ -2,7 +2,7 @@ import { EllipsisVertical } from "lucide-react";
 import clsx from "clsx";
 import { useState } from "react";
 import type { KeyboardEvent, MouseEvent, SyntheticEvent } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import type { RecruitCardData } from "../constants/recruitCardList";
 
 interface RecruitCardProps {
@@ -11,12 +11,15 @@ interface RecruitCardProps {
 
 const RecruitCard = ({ recruit }: RecruitCardProps) => {
   const navigate = useNavigate();
+  const { councilId } = useParams<{ councilId: string }>();
   const { id, title, description } = recruit;
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isPosted, setIsPosted] = useState(Boolean(recruit.isPosted));
 
   const handleNavigate = () => {
-    navigate(`/recruit/detail/${id}`);
+    if (councilId) {
+      navigate(`/${councilId}/recruit/detail/${id}`);
+    }
   };
 
   const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
