@@ -31,8 +31,8 @@ const ChangeClubNameContainer = () => {
           console.log("학생회명 변경 성공:", response);
           setSavedClubName(response.data.councilName);
           setDraftName(response.data.councilName);
-          setStatusMessage("학생회명이 저장되었어요.");
-          setTimeout(() => setStatusMessage(""), 2000);
+    setStatusMessage("학생회명이 저장되었어요.");
+    setTimeout(() => setStatusMessage(""), 2000);
         },
         onError: (error) => {
           console.error("학생회명 변경 실패:", error);

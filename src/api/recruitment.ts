@@ -1,4 +1,4 @@
-import { API_URLS, getAuthHeaders } from "./config";
+import { API_URLS, getAuthHeaders, handleFetchResponse } from "./config";
 
 export type RecruitmentItemType =
   | "TEXT"
@@ -7,6 +7,7 @@ export type RecruitmentItemType =
   | "ANNOUNCEMENT";
 
 export type RecruitmentItemOption = {
+  id?: number;
   title: string;
   order: number;
   isEtc?: boolean;
@@ -60,13 +61,7 @@ export const createRecruitment = async (
     body: JSON.stringify(data),
   });
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.error("API Error Response:", errorText);
-    throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
-  }
-
-  return response.json();
+  return handleFetchResponse<CreateRecruitmentResponse>(response);
 };
 
 export const getRecruitments = async (): Promise<GetRecruitmentsResponse> => {
@@ -77,13 +72,7 @@ export const getRecruitments = async (): Promise<GetRecruitmentsResponse> => {
     headers,
   });
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.error("API Error Response:", errorText);
-    throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
-  }
-
-  return response.json();
+  return handleFetchResponse<GetRecruitmentsResponse>(response);
 };
 
 export type ActivateRecruitmentRequest = {
@@ -120,11 +109,124 @@ export const activateRecruitment = async (
     }
   );
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.error("API Error Response:", errorText);
-    throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
-  }
+  return handleFetchResponse<ActivateRecruitmentResponse>(response);
+};
 
-  return response.json();
+export type DeleteRecruitmentResponse = {
+  code: number;
+  message: string;
+  data: Record<string, never>;
+};
+
+export const deleteRecruitment = async (
+  recruitmentId: number
+): Promise<DeleteRecruitmentResponse> => {
+  const headers = getAuthHeaders();
+
+  const response = await fetch(`${API_URLS.RECRUITMENT}/${recruitmentId}`, {
+    method: "DELETE",
+    headers,
+  });
+
+  return handleFetchResponse<DeleteRecruitmentResponse>(response);
+};
+
+export type RecruitmentDetailItem = {
+  id: number;
+  type: RecruitmentItemType;
+  required: boolean;
+  title: string;
+  order: number;
+  description: string;
+  multiple?: boolean;
+  options?: RecruitmentItemOption[];
+  maxLength?: number;
+  date?: string;
+  announcement?: string;
+};
+
+export type RecruitmentDetailData = {
+  id: number;
+  name: string;
+  endAt?: string;
+  isActive: boolean;
+  recruitmentStatus: string;
+  items: RecruitmentDetailItem[];
+};
+
+export type RecruitmentDetailResponse = {
+  code: number;
+  message: string;
+  data: RecruitmentDetailData;
+};
+
+export const getRecruitmentDetail = async (
+  recruitmentId: number
+): Promise<RecruitmentDetailResponse> => {
+  const headers = getAuthHeaders();
+
+  const response = await fetch(`${API_URLS.RECRUITMENT}/${recruitmentId}`, {
+    method: "GET",
+    headers,
+  });
+
+  return handleFetchResponse<RecruitmentDetailResponse>(response);
+};
+
+export type UpdateRecruitmentRequest = CreateRecruitmentRequest;
+export type UpdateRecruitmentResponse = CreateRecruitmentResponse;
+
+export const updateRecruitment = async (
+  recruitmentId: number,
+  data: UpdateRecruitmentRequest
+): Promise<UpdateRecruitmentResponse> => {
+  const headers = getAuthHeaders();
+
+  const response = await fetch(`${API_URLS.RECRUITMENT}/${recruitmentId}`, {
+    method: "PATCH",
+    headers,
+    body: JSON.stringify(data),
+  });
+
+  return handleFetchResponse<UpdateRecruitmentResponse>(response);
+};
+
+export type ApplicationAnswerPayload = {
+  itemId: number;
+  text?: string;
+  optionIds?: number[];
+  date?: string;
+};
+
+export type SubmitApplicationRequest = {
+  name: string;
+  email: string;
+  tel: string;
+  answers: ApplicationAnswerPayload[];
+};
+
+export type SubmitApplicationResponse = {
+  code: number;
+  message: string;
+  data: {
+    applicationId: number;
+  };
+};
+
+export const submitApplication = async (
+  recruitmentId: number,
+  payload: SubmitApplicationRequest
+): Promise<SubmitApplicationResponse> => {
+  const headers = getAuthHeaders();
+
+  const response = await fetch(
+    API_URLS.APPLICATIONS.replace(":recruitmentId", String(recruitmentId)),
+    {
+      method: "POST",
+      headers,
+      body: JSON.stringify(payload),
+    }
+  );
+
+  return handleFetchResponse<SubmitApplicationResponse>(response);
 };

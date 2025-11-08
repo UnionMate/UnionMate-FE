@@ -1,10 +1,10 @@
 import { EllipsisVertical } from "lucide-react";
 import clsx from "clsx";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import type { KeyboardEvent, MouseEvent, SyntheticEvent } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { activateRecruitment } from "@/api/recruitment";
+import { activateRecruitment, deleteRecruitment } from "@/api/recruitment";
 import type { RecruitCardData } from "../constants/recruitCardList";
 
 interface RecruitCardProps {
@@ -16,8 +16,11 @@ const RecruitCard = ({ recruit }: RecruitCardProps) => {
   const { councilId } = useParams<{ councilId: string }>();
   const { id, name, isActive } = recruit;
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isPosted, setIsPosted] = useState(isActive);
+  const [copyMessage, setCopyMessage] = useState("");
   const queryClient = useQueryClient();
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const { mutate: activateRecruit, isPending } = useMutation({
     mutationFn: () => activateRecruitment(id, { active: true }),
@@ -30,6 +33,18 @@ const RecruitCard = ({ recruit }: RecruitCardProps) => {
     onError: (error) => {
       console.error("모집 게시 실패:", error);
       alert("모집 게시에 실패했습니다. 다시 시도해주세요.");
+    },
+  });
+
+  const { mutate: removeRecruit, isPending: isDeletePending } = useMutation({
+    mutationFn: () => deleteRecruitment(id),
+    onSuccess: () => {
+      setIsDropdownOpen(false);
+      queryClient.invalidateQueries({ queryKey: ["recruitments"] });
+    },
+    onError: (error) => {
+      console.error("모집 삭제 실패:", error);
+      alert("모집 삭제에 실패했습니다. 다시 시도해주세요.");
     },
   });
 
@@ -69,6 +84,80 @@ const RecruitCard = ({ recruit }: RecruitCardProps) => {
     setIsModalOpen(false);
   };
 
+  const handleDropdownToggle = (event: MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setIsDropdownOpen((prev) => !prev);
+  };
+
+  const handleEdit = (event: MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setIsDropdownOpen(false);
+    if (councilId) {
+      navigate(`/${councilId}/update/${id}`);
+    }
+  };
+
+  const handleDelete = (event: MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    if (isPosted) return;
+    removeRecruit();
+  };
+
+  const handleCopyLink = async (event: MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    const baseUrl =
+      typeof window !== "undefined"
+        ? window.location.origin
+        : "http://localhost:5173";
+    const link = `${baseUrl}/recruitment/${id}`;
+
+    try {
+      if (navigator.clipboard && "writeText" in navigator.clipboard) {
+        await navigator.clipboard.writeText(link);
+      } else {
+        const textarea = document.createElement("textarea");
+        textarea.value = link;
+        textarea.style.position = "fixed";
+        textarea.style.opacity = "0";
+        document.body.appendChild(textarea);
+        textarea.focus();
+        textarea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textarea);
+      }
+      setCopyMessage("링크가 복사되었어요.");
+      setTimeout(() => setCopyMessage(""), 2500);
+    } catch (error) {
+      console.error("링크 복사 실패:", error);
+      setCopyMessage("복사에 실패했습니다. 다시 시도해주세요.");
+      setTimeout(() => setCopyMessage(""), 2500);
+    }
+  };
+
+  // 외부 클릭 시 드롭다운 닫기
+  useEffect(() => {
+    const handleClickOutside = (event: globalThis.MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsDropdownOpen(false);
+      }
+    };
+
+    if (isDropdownOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isDropdownOpen]);
+
   return (
     <div
       role="button"
@@ -79,11 +168,59 @@ const RecruitCard = ({ recruit }: RecruitCardProps) => {
     >
       <div className="flex flex-col h-full gap-[72px]">
         {/* Top Section */}
-        <div className="flex flex-col gap-1">
-          <div className="flex justify-between items-center">
+        <div className="flex flex-col gap-2">
+          <div className="flex justify-between items-center relative">
             <div className="text-base font-bold text-gray-800">{name}</div>
-            <EllipsisVertical className="w-5 h-5 text-gray-400" />
+            {!isPosted && (
+              <div
+                ref={dropdownRef}
+                className="relative"
+                onClick={stopPropagation}
+              >
+                <button
+                  type="button"
+                  onClick={handleDropdownToggle}
+                  className="flex items-center justify-center p-1 rounded hover:bg-gray-100 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                  aria-label="메뉴 열기"
+                >
+                  <EllipsisVertical className="w-5 h-5 text-gray-400" />
+                </button>
+                {isDropdownOpen && (
+                  <div className="absolute right-0 top-8 z-50 w-32 rounded-lg bg-white shadow-lg border border-gray-200 py-1">
+                    <button
+                      type="button"
+                      onClick={handleEdit}
+                      className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors focus:outline-none focus-visible:bg-gray-50"
+                    >
+                      수정
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleDelete}
+                      disabled={isDeletePending}
+                      className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 transition-colors focus:outline-none focus-visible:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {isDeletePending ? "삭제 중..." : "삭제"}
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
+          {isPosted && (
+            <div className="flex flex-col gap-1">
+              <button
+                type="button"
+                onClick={handleCopyLink}
+                className="w-fit rounded-full border border-primary/40 px-3 py-1 text-12-semibold text-primary transition hover:bg-primary/10"
+              >
+                링크 복사하기
+              </button>
+              {copyMessage && (
+                <p className="text-12-medium text-primary">{copyMessage}</p>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Bottom Section */}

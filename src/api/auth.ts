@@ -1,6 +1,5 @@
 import { useMutation } from "@tanstack/react-query";
-import axios from "axios";
-import { API_URLS } from "./config";
+import { API_URLS, apiClient } from "./config";
 
 export type ManagerRegisterRequest = {
   name: string;
@@ -35,8 +34,11 @@ export type ManagerLoginResponse = {
 async function registerManager(
   payload: ManagerRegisterRequest
 ): Promise<ManagerRegisterResponse> {
-  const { data } = await axios.post(API_URLS.MANAGER_REGISTER, payload, {
-    headers: { "Content-Type": "application/json", Accept: "application/json" },
+  const { data } = await apiClient.post(API_URLS.MANAGER_REGISTER, payload, {
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
     withCredentials: true,
   });
 
@@ -51,8 +53,11 @@ async function registerManager(
 async function loginManager(
   payload: ManagerLoginRequest
 ): Promise<ManagerLoginResponse> {
-  const { data } = await axios.post(API_URLS.MANAGER_LOGIN, payload, {
-    headers: { "Content-Type": "application/json", Accept: "application/json" },
+  const { data } = await apiClient.post(API_URLS.MANAGER_LOGIN, payload, {
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
     withCredentials: true,
   });
 

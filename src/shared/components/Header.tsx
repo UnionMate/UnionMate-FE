@@ -1,6 +1,6 @@
 import { ArrowLeft, Plus } from "lucide-react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { createRecruitment } from "@/api/recruitment";
+import { createRecruitment, updateRecruitment } from "@/api/recruitment";
 import { convertFormDataToApiRequest } from "@/api/formDataConverter";
 import { useContext } from "react";
 import { FormEditContext } from "@/widget/formEdit/context/FormEditContext";
@@ -9,20 +9,21 @@ import { toast } from "sonner";
 const Header = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { councilId } = useParams<{ councilId: string }>();
+  const { councilId, recruitmentId } =
+    useParams<{ councilId: string; recruitmentId?: string }>();
 
   // FormEditContext가 존재하는지 확인
   const formEditContext = useContext(FormEditContext);
 
-  const isFormEditPage =
-    location.pathname === "/applicationform/edit" ||
-    location.pathname.includes("/applicationform/edit");
+  const isFormEditPage = location.pathname.includes("/applicationform/edit");
+  const isFormUpdatePage = location.pathname.includes("/update/");
+  const isFormBuilderPage = isFormEditPage || isFormUpdatePage;
 
   const handleBack = () => {
     navigate(-1);
   };
 
-  const handleCreate = async () => {
+  const handleSubmit = async () => {
     // FormEditContext가 없으면 실행하지 않음
     if (!formEditContext) {
       console.warn("FormEditContext가 없습니다.");
@@ -65,11 +66,27 @@ const Header = () => {
         currentQuestions
       );
 
-      // API 호출
-      await createRecruitment(recruitmentData);
+      if (isFormUpdatePage) {
+        const parsedRecruitmentId = recruitmentId
+          ? Number(recruitmentId)
+          : NaN;
+
+        if (Number.isNaN(parsedRecruitmentId)) {
+          alert("수정할 모집 정보를 찾을 수 없습니다.");
+          return;
+        }
+
+        await updateRecruitment(parsedRecruitmentId, recruitmentData);
+      } else {
+        await createRecruitment(recruitmentData);
+      }
 
       // 성공 토스트 표시
-      toast.success("모집 지원서 생성이 완료되었습니다.");
+      toast.success(
+        isFormUpdatePage
+          ? "모집 지원서 수정이 완료되었습니다."
+          : "모집 지원서 생성이 완료되었습니다."
+      );
 
       // 성공 시 페이지 이동
       if (councilId) {
@@ -78,13 +95,13 @@ const Header = () => {
         navigate("/applicationform");
       }
     } catch (error) {
-      console.error("지원서 양식 생성 실패:", error);
+      console.error("지원서 양식 저장 실패:", error);
 
       if (error instanceof Error && error.message.includes("403")) {
         alert("로그인이 필요합니다. 먼저 로그인해주세요.");
         navigate("/login");
       } else {
-        alert("지원서 양식 생성에 실패했습니다. 다시 시도해주세요.");
+        alert("지원서 양식을 저장하지 못했습니다. 다시 시도해주세요.");
       }
     }
   };
@@ -97,7 +114,7 @@ const Header = () => {
         </div>
       </div>
 
-      {isFormEditPage && formEditContext && (
+      {isFormBuilderPage && formEditContext && (
         <div className="flex items-center gap-3">
           <button
             type="button"
@@ -109,11 +126,11 @@ const Header = () => {
           </button>
           <button
             type="button"
-            onClick={handleCreate}
+            onClick={handleSubmit}
             className="flex items-center gap-2 rounded-xl bg-primary px-5 py-2 text-title-14-semibold text-white transition hover:opacity-90"
           >
             <Plus className="h-4 w-4" />
-            <span>모집 생성하기</span>
+            <span>{isFormUpdatePage ? "모집 수정하기" : "모집 생성하기"}</span>
           </button>
         </div>
       )}

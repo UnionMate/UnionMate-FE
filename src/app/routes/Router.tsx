@@ -1,6 +1,5 @@
 import { createBrowserRouter } from "react-router-dom";
 import LandingPage from "../../pages/landing/LandingPage";
-import LoginPage from "../../pages/login/LoginPage";
 import RootLayout from "../layout/RootLayout";
 import GreetingPage from "../../pages/greeting/GreetingPage";
 import CreateClubPage from "@/pages/createclub/CreateClubPage";
@@ -11,10 +10,14 @@ import RecruitDetailPage from "@/pages/recruitdetail/RecruitDetailPage";
 import RecruitApplicantPage from "@/pages/recruitApplicant/RecruitApplicantPage";
 import SettingPage from "@/pages/setting/SettingPage";
 import FormEditPageWrapper from "@/pages/formEdit/FormEditPageWrapper";
+import FormUpdatePage from "@/pages/formEdit/FormUpdatePage";
 import AdminLoginPage from "@/pages/admin/AdminLoginPage";
 import AdminRegisterPage from "@/pages/admin/register/AdminRegisterPage";
 import AdminGreetingPage from "@/pages/admin/greeting/AdminGreetingPage";
 import ApplicationListPage from "@/pages/applications/ApplicationListPage";
+import ApplicationEditPage from "@/pages/applications/ApplicationEditPage";
+import RecruitmentApplyPage from "@/pages/recruitment/RecruitmentApplyPage";
+import RecruitmentThankYouPage from "@/pages/recruitment/RecruitmentThankYouPage";
 
 export const router = createBrowserRouter([
   {
@@ -27,7 +30,7 @@ export const router = createBrowserRouter([
     children: [
       {
         index: true,
-        element: <LoginPage />,
+        element: <ApplicationListPage />,
       },
     ],
   },
@@ -61,6 +64,16 @@ export const router = createBrowserRouter([
       },
     ],
   },
+  {
+    path: "/applications/update/:applicationId",
+    element: <RootLayout />,
+    children: [
+      {
+        index: true,
+        element: <ApplicationEditPage />,
+      },
+    ],
+  },
 
   {
     path: "/admin",
@@ -90,7 +103,6 @@ export const router = createBrowserRouter([
       },
     ],
   },
-  // DashboardLayout을 사용하는 공통 경로들
   {
     path: "/:councilId/recruit",
     element: <DashboardLayout />,
@@ -128,6 +140,24 @@ export const router = createBrowserRouter([
         element: <FormEditPageWrapper />,
       },
     ],
+  },
+  {
+    path: "/:councilId/update/:recruitmentId",
+    element: <RootLayout />,
+    children: [
+      {
+        index: true,
+        element: <FormUpdatePage />,
+      },
+    ],
+  },
+  {
+    path: "/recruitment/:recruitmentId",
+    element: <RecruitmentApplyPage />,
+  },
+  {
+    path: "/recruitment/:recruitmentId/thanks",
+    element: <RecruitmentThankYouPage />,
   },
 ]);
 

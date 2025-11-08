@@ -1,8 +1,15 @@
-import type { QuestionConfig } from "@/widget/formEdit/types";
+import type {
+  QuestionConfig,
+  QuestionOption,
+  QuestionType,
+} from "@/widget/formEdit/types";
 import type {
   CreateRecruitmentRequest,
   CreateRecruitmentItemRequest,
+  RecruitmentDetailData,
+  RecruitmentDetailItem,
 } from "./recruitment";
+import { FIXED_FIELDS } from "@/widget/formEdit/constants";
 
 /**
  * 폼 에디터의 질문 타입을 API의 RecruitmentItemType으로 변환
@@ -107,5 +114,142 @@ export const convertFormDataToApiRequest = (
     isActive: false,
     recruitmentStatus: "DOCUMENT_SCREENING",
     items,
+  };
+};
+
+const createQuestionId = () =>
+  `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+
+const mapRecruitmentTypeToQuestionType = (
+  item: RecruitmentDetailItem
+): QuestionType => {
+  switch (item.type) {
+    case "SELECT":
+      return item.multiple ? "multi-check" : "single-check";
+    case "TEXT":
+      return item.maxLength && item.maxLength > 255
+        ? "long-answer"
+        : "short-answer";
+    case "CALENDAR":
+      return "date-picker";
+    case "ANNOUNCEMENT":
+      return "description";
+    default:
+      return "short-answer";
+  }
+};
+
+const convertOptions = (
+  options: RecruitmentDetailItem["options"]
+): QuestionOption[] => {
+  if (!options || options.length === 0) {
+    return [
+      {
+        id: createQuestionId(),
+        text: "",
+        helper: true,
+        placeholder: "선택지를 입력하세요.",
+      },
+      {
+        id: createQuestionId(),
+        text: "",
+        helper: true,
+        placeholder: "선택지를 입력하세요.",
+      },
+    ];
+  }
+
+  return options
+    .sort((a, b) => a.order - b.order)
+    .map((option) => ({
+      id: createQuestionId(),
+      text: option.title ?? "",
+      helper: true,
+      placeholder: option.etcTitle ?? option.title ?? "",
+      isOther: option.isEtc ?? false,
+    }));
+};
+
+const convertRecruitmentItemToQuestion = (
+  item: RecruitmentDetailItem
+): QuestionConfig | null => {
+  const questionType = mapRecruitmentTypeToQuestionType(item);
+  const normalizedDescription =
+    item.type === "ANNOUNCEMENT"
+      ? item.announcement ?? item.description ?? ""
+      : item.description ?? "";
+
+  const baseQuestion: QuestionConfig = {
+    id: createQuestionId(),
+    type: questionType,
+    title: item.title ?? "",
+    description: normalizedDescription,
+    isRequired: Boolean(item.required),
+  };
+
+  if (questionType === "single-check" || questionType === "multi-check") {
+    return {
+      ...baseQuestion,
+      multiple: questionType === "multi-check",
+      options: convertOptions(item.options),
+    };
+  }
+
+  if (questionType === "short-answer" || questionType === "long-answer") {
+    return {
+      ...baseQuestion,
+      multiple: questionType === "long-answer",
+      maxLength:
+        item.maxLength ?? (questionType === "short-answer" ? 255 : 1000),
+    };
+  }
+
+  if (questionType === "date-picker") {
+    return {
+      ...baseQuestion,
+      dateValue: item.date ?? "",
+    };
+  }
+
+  if (questionType === "description") {
+    return {
+      ...baseQuestion,
+      isRequired: false,
+    };
+  }
+
+  return baseQuestion;
+};
+
+const formatEndTime = (date: Date) => {
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+  return `${hours}:${minutes}`;
+};
+
+export const convertRecruitmentDetailToFormData = (
+  detail: RecruitmentDetailData
+) => {
+  const rawEndDate = detail.endAt ? new Date(detail.endAt) : null;
+  const isValidDate =
+    rawEndDate !== null && !Number.isNaN(rawEndDate.getTime());
+  const endDate = isValidDate ? rawEndDate : null;
+  const endTime = isValidDate && endDate ? formatEndTime(endDate) : "00:00";
+
+  const fixedLabels = new Set(FIXED_FIELDS.map((field) => field.label));
+  const dynamicItems = detail.items
+    ?.filter((item) => !fixedLabels.has(item.title))
+    .sort((a, b) => a.order - b.order);
+
+  const questions =
+    dynamicItems
+      ?.map((item) => convertRecruitmentItemToQuestion(item))
+      .filter((question): question is QuestionConfig => Boolean(question)) ?? [];
+
+  return {
+    name: detail.name ?? "",
+    endDate,
+    endTime,
+    questions,
   };
 };
