@@ -1,4 +1,9 @@
-import { API_URLS, getAuthHeaders, handleFetchResponse } from "./config";
+import {
+  API_URLS,
+  getApiUrl,
+  getAuthHeaders,
+  handleFetchResponse,
+} from "./config";
 import type {
   RecruitmentItemType,
   SubmitApplicationRequest,
@@ -41,9 +46,11 @@ export const getApplicationDetail = async (
   const headers = getAuthHeaders();
 
   const response = await fetch(
-    API_URLS.APPLICATION_DETAIL.replace(
-      ":applicationId",
-      String(applicationId)
+    getApiUrl(
+      API_URLS.APPLICATION_DETAIL.replace(
+        ":applicationId",
+        String(applicationId)
+      )
     ),
     {
       method: "GET",
@@ -71,9 +78,11 @@ export const updateApplication = async (
   const headers = getAuthHeaders();
 
   const response = await fetch(
-    API_URLS.APPLICATION_DETAIL.replace(
-      ":applicationId",
-      String(applicationId)
+    getApiUrl(
+      API_URLS.APPLICATION_DETAIL.replace(
+        ":applicationId",
+        String(applicationId)
+      )
     ),
     {
       method: "PATCH",
@@ -133,9 +142,11 @@ export const getApplicationAdminDetail = async (
   const headers = getAuthHeaders();
 
   const response = await fetch(
-    API_URLS.APPLICATION_ADMIN_DETAIL.replace(
-      ":applicationId",
-      String(applicationId)
+    getApiUrl(
+      API_URLS.APPLICATION_ADMIN_DETAIL.replace(
+        ":applicationId",
+        String(applicationId)
+      )
     ),
     {
       method: "GET",
@@ -168,9 +179,11 @@ export const updateInterviewSchedule = async (
   const headers = getAuthHeaders();
 
   const response = await fetch(
-    API_URLS.APPLICATION_INTERVIEW_SCHEDULE.replace(
-      ":applicationId",
-      String(applicationId)
+    getApiUrl(
+      API_URLS.APPLICATION_INTERVIEW_SCHEDULE.replace(
+        ":applicationId",
+        String(applicationId)
+      )
     ),
     {
       method: "PATCH",
@@ -203,9 +216,11 @@ export const getApplicationComments = async (
   const headers = getAuthHeaders();
 
   const response = await fetch(
-    API_URLS.APPLICATION_COMMENTS.replace(
-      ":applicationId",
-      String(applicationId)
+    getApiUrl(
+      API_URLS.APPLICATION_COMMENTS.replace(
+        ":applicationId",
+        String(applicationId)
+      )
     ),
     {
       method: "GET",
@@ -233,9 +248,11 @@ export const createApplicationComment = async (
   const headers = getAuthHeaders();
 
   const response = await fetch(
-    API_URLS.APPLICATION_COMMENTS.replace(
-      ":applicationId",
-      String(applicationId)
+    getApiUrl(
+      API_URLS.APPLICATION_COMMENTS.replace(
+        ":applicationId",
+        String(applicationId)
+      )
     ),
     {
       method: "POST",
@@ -259,10 +276,12 @@ export const updateApplicationComment = async (
   const headers = getAuthHeaders();
 
   const response = await fetch(
-    `${API_URLS.APPLICATION_COMMENTS.replace(
-      ":applicationId",
-      String(applicationId)
-    )}/${commentId}`,
+    getApiUrl(
+      `${API_URLS.APPLICATION_COMMENTS.replace(
+        ":applicationId",
+        String(applicationId)
+      )}/${commentId}`
+    ),
     {
       method: "PATCH",
       headers,
@@ -280,10 +299,12 @@ export const deleteApplicationComment = async (
   const headers = getAuthHeaders();
 
   const response = await fetch(
-    `${API_URLS.APPLICATION_COMMENTS.replace(
-      ":applicationId",
-      String(applicationId)
-    )}/${commentId}`,
+    getApiUrl(
+      `${API_URLS.APPLICATION_COMMENTS.replace(
+        ":applicationId",
+        String(applicationId)
+      )}/${commentId}`
+    ),
     {
       method: "DELETE",
       headers,

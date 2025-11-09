@@ -1,6 +1,12 @@
 import axios from "axios";
 
-export const SERVER_URI = import.meta.env.VITE_SERVER_URI;
+const rawServerUri =
+  import.meta.env.VITE_SERVER_URI ||
+  (typeof window !== "undefined" ? window.location.origin : "");
+
+export const SERVER_URI = rawServerUri
+  ? rawServerUri.replace(/\/$/, "")
+  : "";
 
 export const API_URLS = {
   RECRUITMENT: "/backend/recruitment",
@@ -22,7 +28,13 @@ export const API_URLS = {
 } as const;
 
 export const getApiUrl = (endpoint: string): string => {
-  return `${SERVER_URI}${endpoint}`;
+  if (!SERVER_URI) {
+    return endpoint;
+  }
+  const normalizedEndpoint = endpoint.startsWith("/")
+    ? endpoint
+    : `/${endpoint}`;
+  return `${SERVER_URI}${normalizedEndpoint}`;
 };
 
 const TOKEN_EXPIRED_CODE = 10002;
@@ -125,6 +137,7 @@ export const getAuthHeaders = (): Record<string, string> => {
  * 인증 토큰이 자동으로 포함되는 axios 인스턴스입니다.
  */
 export const apiClient = axios.create({
+  baseURL: SERVER_URI || undefined,
   headers: {
     "Content-Type": "application/json",
     Accept: "application/json",

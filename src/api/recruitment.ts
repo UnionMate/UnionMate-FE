@@ -1,4 +1,9 @@
-import { API_URLS, getAuthHeaders, handleFetchResponse } from "./config";
+import {
+  API_URLS,
+  getApiUrl,
+  getAuthHeaders,
+  handleFetchResponse,
+} from "./config";
 
 export type RecruitmentItemType =
   | "TEXT"
@@ -55,7 +60,7 @@ export const createRecruitment = async (
 ): Promise<CreateRecruitmentResponse> => {
   const headers = getAuthHeaders();
 
-  const response = await fetch(API_URLS.RECRUITMENT, {
+  const response = await fetch(getApiUrl(API_URLS.RECRUITMENT), {
     method: "POST",
     headers,
     body: JSON.stringify(data),
@@ -67,7 +72,7 @@ export const createRecruitment = async (
 export const getRecruitments = async (): Promise<GetRecruitmentsResponse> => {
   const headers = getAuthHeaders();
 
-  const response = await fetch(API_URLS.RECRUITMENT, {
+  const response = await fetch(getApiUrl(API_URLS.RECRUITMENT), {
     method: "GET",
     headers,
   });
@@ -98,9 +103,11 @@ export const activateRecruitment = async (
   const headers = getAuthHeaders();
 
   const response = await fetch(
-    API_URLS.RECRUITMENT_ACTIVATION.replace(
-      ":recruitmentId",
-      String(recruitmentId)
+    getApiUrl(
+      API_URLS.RECRUITMENT_ACTIVATION.replace(
+        ":recruitmentId",
+        String(recruitmentId)
+      )
     ),
     {
       method: "POST",
@@ -123,10 +130,13 @@ export const deleteRecruitment = async (
 ): Promise<DeleteRecruitmentResponse> => {
   const headers = getAuthHeaders();
 
-  const response = await fetch(`${API_URLS.RECRUITMENT}/${recruitmentId}`, {
-    method: "DELETE",
-    headers,
-  });
+  const response = await fetch(
+    getApiUrl(`${API_URLS.RECRUITMENT}/${recruitmentId}`),
+    {
+      method: "DELETE",
+      headers,
+    }
+  );
 
   return handleFetchResponse<DeleteRecruitmentResponse>(response);
 };
@@ -165,10 +175,13 @@ export const getRecruitmentDetail = async (
 ): Promise<RecruitmentDetailResponse> => {
   const headers = getAuthHeaders();
 
-  const response = await fetch(`${API_URLS.RECRUITMENT}/${recruitmentId}`, {
-    method: "GET",
-    headers,
-  });
+  const response = await fetch(
+    getApiUrl(`${API_URLS.RECRUITMENT}/${recruitmentId}`),
+    {
+      method: "GET",
+      headers,
+    }
+  );
 
   return handleFetchResponse<RecruitmentDetailResponse>(response);
 };
@@ -182,11 +195,14 @@ export const updateRecruitment = async (
 ): Promise<UpdateRecruitmentResponse> => {
   const headers = getAuthHeaders();
 
-  const response = await fetch(`${API_URLS.RECRUITMENT}/${recruitmentId}`, {
-    method: "PATCH",
-    headers,
-    body: JSON.stringify(data),
-  });
+  const response = await fetch(
+    getApiUrl(`${API_URLS.RECRUITMENT}/${recruitmentId}`),
+    {
+      method: "PATCH",
+      headers,
+      body: JSON.stringify(data),
+    }
+  );
 
   return handleFetchResponse<UpdateRecruitmentResponse>(response);
 };
@@ -220,7 +236,9 @@ export const submitApplication = async (
   const headers = getAuthHeaders();
 
   const response = await fetch(
-    API_URLS.APPLICATIONS.replace(":recruitmentId", String(recruitmentId)),
+    getApiUrl(
+      API_URLS.APPLICATIONS.replace(":recruitmentId", String(recruitmentId))
+    ),
     {
       method: "POST",
       headers,

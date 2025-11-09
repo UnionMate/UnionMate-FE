@@ -39,7 +39,9 @@ const formatDisplayTime = (value?: string) => {
   return `${suffix} ${String(normalizedHour).padStart(2, "0")}:${minutes}`;
 };
 
-const normalizeSelectAnswer = (answer: ApplicationAdminAnswer) => {
+const normalizeSelectAnswer = (
+  answer: ApplicationAdminAnswer
+): ApplicantQuestion => {
   const options =
     answer.selectedOptionTitles ??
     answer.selectedOptionIds?.map((id) => `선택지 ${id + 1}`) ??
@@ -51,7 +53,7 @@ const normalizeSelectAnswer = (answer: ApplicationAdminAnswer) => {
     question: answer.title,
     options,
     selected: [...options],
-  } as const;
+  };
 };
 
 const normalizeParagraphAnswer = (
@@ -73,9 +75,7 @@ const normalizeParagraphAnswer = (
   };
 };
 
-const normalizeAnswer = (
-  answer: ApplicationAdminAnswer
-): ApplicantQuestion => {
+const normalizeAnswer = (answer: ApplicationAdminAnswer): ApplicantQuestion => {
   if (answer.itemType === "SELECT") {
     return normalizeSelectAnswer(answer);
   }
@@ -88,20 +88,24 @@ export const mapAdminApplicationDetailToApplicant = (
   const stageLabel =
     RECRUITMENT_STAGE_LABEL[detail.stage?.recruitmentStatus] ?? "지원 단계";
   const interviewTimeIso = detail.interview?.time;
+  const applicantName = detail.applicant?.name ?? "이름 미확인";
+  const applicantEmail = detail.applicant?.email ?? "-";
+  const applicantTel = detail.applicant?.tel ?? "-";
+  const recruitmentName = detail.recruitment?.recruitmentName ?? "미지정 전형";
 
   return {
     id: String(detail.applicationId),
-    name: detail.applicant.name,
+    name: applicantName,
     status: mapEvaluationStatusToApplicantStatus(
       detail.stage?.evaluationStatus
     ),
-    appliedTrack: detail.recruitment.recruitmentName,
-    submittedAt: detail.submittedAt,
+    appliedTrack: recruitmentName,
+    submittedAt: detail.submittedAt ?? "",
     steps: [stageLabel],
     profile: [
-      { label: "지원자명", value: detail.applicant.name },
-      { label: "이메일", value: detail.applicant.email },
-      { label: "전화번호", value: detail.applicant.tel },
+      { label: "지원자명", value: applicantName },
+      { label: "이메일", value: applicantEmail },
+      { label: "전화번호", value: applicantTel },
     ],
     questions: (detail.answers ?? []).map(normalizeAnswer),
     memos: [],

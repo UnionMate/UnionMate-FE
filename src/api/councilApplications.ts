@@ -1,5 +1,6 @@
 import {
   API_URLS,
+  getApiUrl,
   getAuthHeaders,
   handleFetchResponse,
 } from "./config";
@@ -28,7 +29,7 @@ export const getDocumentScreeningApplications = async (
     String(councilId)
   );
 
-  const response = await fetch(endpoint, {
+  const response = await fetch(getApiUrl(endpoint), {
     method: "GET",
     headers,
   });
