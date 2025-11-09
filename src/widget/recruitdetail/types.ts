@@ -44,6 +44,7 @@ export interface ApplicantDetail {
     date: string;
     time: string;
     location: string;
+    rawTime?: string;
   };
   reactions: {
     cheer: number;

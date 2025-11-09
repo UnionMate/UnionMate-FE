@@ -238,13 +238,16 @@ export const convertRecruitmentDetailToFormData = (
 
   const fixedLabels = new Set(FIXED_FIELDS.map((field) => field.label));
   const dynamicItems = detail.items
-    ?.filter((item) => !fixedLabels.has(item.title))
+    ?.filter(
+      (item) => !fixedLabels.has(item.title as "이름" | "전화번호" | "이메일")
+    )
     .sort((a, b) => a.order - b.order);
 
   const questions =
     dynamicItems
       ?.map((item) => convertRecruitmentItemToQuestion(item))
-      .filter((question): question is QuestionConfig => Boolean(question)) ?? [];
+      .filter((question): question is QuestionConfig => Boolean(question)) ??
+    [];
 
   return {
     name: detail.name ?? "",

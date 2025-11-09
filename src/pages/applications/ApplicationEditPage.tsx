@@ -4,6 +4,7 @@ import { useLocation, useNavigate, useParams } from "react-router-dom";
 import {
   getApplicationDetail,
   updateApplication,
+  type ApplicationAnswerDetail,
 } from "@/api/application";
 import {
   getRecruitmentDetail,
@@ -28,7 +29,9 @@ const ApplicationEditPage = () => {
   const { applicationId } = useParams<{ applicationId: string }>();
   const navigate = useNavigate();
   const location = useLocation();
-  const locationState = location.state as { recruitmentId?: number } | undefined;
+  const locationState = location.state as
+    | { recruitmentId?: number }
+    | undefined;
   const parsedId = applicationId ? Number(applicationId) : NaN;
   const hasValidId = Number.isFinite(parsedId);
   const [answers, setAnswers] = useState<AnswerState>({});
@@ -127,8 +130,8 @@ const ApplicationEditPage = () => {
   );
 
   const answerMapById = useMemo(() => {
-    const map = new Map<number, (typeof detail.answers)[number]>();
-    detail?.answers.forEach((answer) => {
+    const map = new Map<number, ApplicationAnswerDetail>();
+    detail?.answers?.forEach((answer) => {
       if (typeof answer.recruitmentItemId === "number") {
         map.set(answer.recruitmentItemId, answer);
       }
@@ -137,8 +140,8 @@ const ApplicationEditPage = () => {
   }, [detail?.answers]);
 
   const answerMapByOrder = useMemo(() => {
-    const map = new Map<number, (typeof detail.answers)[number]>();
-    detail?.answers.forEach((answer) => {
+    const map = new Map<number, ApplicationAnswerDetail>();
+    detail?.answers?.forEach((answer) => {
       if (typeof answer.order === "number") {
         map.set(answer.order, answer);
       }
@@ -428,9 +431,11 @@ const ApplicationEditPage = () => {
           }
         }
 
-        if (field.id === "applicant-name") accumulator.name = value;
-        if (field.id === "applicant-email") accumulator.email = value;
-        if (field.id === "applicant-phone") accumulator.tel = value;
+        const normalizedValue = Array.isArray(value) ? value.join(", ") : value;
+
+        if (field.id === "applicant-name") accumulator.name = normalizedValue;
+        if (field.id === "applicant-email") accumulator.email = normalizedValue;
+        if (field.id === "applicant-phone") accumulator.tel = normalizedValue;
 
         return accumulator;
       },
@@ -554,7 +559,9 @@ const ApplicationEditPage = () => {
   if (isLoading || isRecruitmentLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-black-5 px-4 py-10">
-        <p className="text-16-semibold text-black-60">지원서를 불러오는 중...</p>
+        <p className="text-16-semibold text-black-60">
+          지원서를 불러오는 중...
+        </p>
       </div>
     );
   }
@@ -580,7 +587,8 @@ const ApplicationEditPage = () => {
           </h1>
           {recruitmentDetail.data.endAt && (
             <p className="text-15-medium text-black-50">
-              마감: {new Date(recruitmentDetail.data.endAt).toLocaleString("ko-KR")}
+              마감:{" "}
+              {new Date(recruitmentDetail.data.endAt).toLocaleString("ko-KR")}
             </p>
           )}
         </header>
@@ -593,7 +601,9 @@ const ApplicationEditPage = () => {
             <div className="flex flex-col gap-4">
               {fixedFieldEntries.map(({ field, item }, index) => {
                 const hasItem = Boolean(item);
-                const key = hasItem ? String(item?.id) : `synthetic-${field.id}`;
+                const key = hasItem
+                  ? String(item?.id)
+                  : `synthetic-${field.id}`;
                 const question: RecruitmentDetailItem =
                   item ??
                   ({
@@ -657,4 +667,3 @@ const ApplicationEditPage = () => {
 };
 
 export default ApplicationEditPage;
-

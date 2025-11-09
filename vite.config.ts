@@ -14,8 +14,9 @@ export default defineConfig({
   server: {
     proxy: {
       "/backend": {
-        target: "http://3.34.87.16:8000",
+        target: "https://129.154.54.225.nip.io",
         changeOrigin: true,
+        secure: false,
       },
     },
   },

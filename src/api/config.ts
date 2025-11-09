@@ -12,7 +12,13 @@ export const API_URLS = {
   GET_COUNCIL_MEMBERS: "/backend/councils/:councilId/members",
   APPLICATIONS: "/backend/applications/:recruitmentId",
   APPLICATION_DETAIL: "/backend/applications/:applicationId",
+  APPLICATION_ADMIN_DETAIL: "/backend/applications/:applicationId/detail/admin",
+  APPLICATION_COMMENTS: "/backend/applications/:applicationId/comments",
+  APPLICATION_INTERVIEW_SCHEDULE:
+    "/backend/applications/:applicationId/interview/schedule",
   MY_APPLICATIONS: "/backend/applications/mine",
+  COUNCIL_DOCUMENT_SCREENING:
+    "/backend/councils/:councilId/applications/document-screening",
 } as const;
 
 export const getApiUrl = (endpoint: string): string => {
