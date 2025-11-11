@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { UsersRound } from "lucide-react";
 import { useParams } from "react-router-dom";
+import { toast } from "sonner";
 import { useChangeCouncilName } from "@/api/changeCouncilName";
 
 const ChangeClubNameContainer = () => {
@@ -28,15 +29,17 @@ const ChangeClubNameContainer = () => {
       { name: nextName },
       {
         onSuccess: (response) => {
-          console.log("학생회명 변경 성공:", response);
           setSavedClubName(response.data.councilName);
           setDraftName(response.data.councilName);
-    setStatusMessage("학생회명이 저장되었어요.");
-    setTimeout(() => setStatusMessage(""), 2000);
+          setStatusMessage("학생회명이 저장되었어요.");
+          toast.success("학생회명이 저장되었어요.");
+          setTimeout(() => setStatusMessage(""), 2000);
         },
         onError: (error) => {
           console.error("학생회명 변경 실패:", error);
-          setStatusMessage("학생회명 변경에 실패했습니다.");
+          const message = "학생회명 변경에 실패했습니다.";
+          setStatusMessage(message);
+          toast.error(message);
           setTimeout(() => setStatusMessage(""), 2000);
         },
       }

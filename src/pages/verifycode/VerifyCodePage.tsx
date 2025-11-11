@@ -5,20 +5,26 @@ import CodeSuccessUi from "@/widget/verifycode/ui/CodeSuccessUi";
 const VerifyCodePage = () => {
   const [currentView, setCurrentView] = useState<"input" | "success">("input");
   const [councilName, setCouncilName] = useState<string | undefined>();
+  const [councilId, setCouncilId] = useState<number | undefined>();
 
-  const handleViewChange = (view: "input" | "success", name?: string) => {
-    if (name) {
-      setCouncilName(name);
-    }
-    setCurrentView(view);
+  const handleSuccess = ({
+    councilName: name,
+    councilId: joinedCouncilId,
+  }: {
+    councilName: string;
+    councilId: number;
+  }) => {
+    setCouncilName(name);
+    setCouncilId(joinedCouncilId);
+    setCurrentView("success");
   };
 
   return (
     <div className="flex items-center justify-center h-screen p-8 bg-white">
       {currentView === "input" ? (
-        <CodeInputUi onSuccess={(name) => handleViewChange("success", name)} />
+        <CodeInputUi onSuccess={handleSuccess} />
       ) : (
-        <CodeSuccessUi councilName={councilName} />
+        <CodeSuccessUi councilName={councilName} councilId={councilId} />
       )}
     </div>
   );

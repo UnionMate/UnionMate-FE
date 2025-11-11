@@ -1,9 +1,4 @@
-import {
-  API_URLS,
-  getApiUrl,
-  getAuthHeaders,
-  handleFetchResponse,
-} from "./config";
+import { API_URLS, apiClient } from "./config";
 import type {
   RecruitmentItemType,
   SubmitApplicationRequest,
@@ -43,22 +38,11 @@ export type ApplicationDetailResponse = {
 export const getApplicationDetail = async (
   applicationId: number
 ): Promise<ApplicationDetailResponse> => {
-  const headers = getAuthHeaders();
-
-  const response = await fetch(
-    getApiUrl(
-      API_URLS.APPLICATION_DETAIL.replace(
-        ":applicationId",
-        String(applicationId)
-      )
-    ),
-    {
-      method: "GET",
-      headers,
-    }
+  const { data } = await apiClient.get(
+    API_URLS.APPLICATION_DETAIL.replace(":applicationId", String(applicationId))
   );
 
-  return handleFetchResponse<ApplicationDetailResponse>(response);
+  return data as ApplicationDetailResponse;
 };
 
 export type UpdateApplicationRequest = SubmitApplicationRequest;
@@ -75,23 +59,15 @@ export const updateApplication = async (
   applicationId: number,
   payload: UpdateApplicationRequest
 ): Promise<UpdateApplicationResponse> => {
-  const headers = getAuthHeaders();
-
-  const response = await fetch(
-    getApiUrl(
-      API_URLS.APPLICATION_DETAIL.replace(
-        ":applicationId",
-        String(applicationId)
-      )
+  const { data } = await apiClient.patch(
+    API_URLS.APPLICATION_DETAIL.replace(
+      ":applicationId",
+      String(applicationId)
     ),
-    {
-      method: "PATCH",
-      headers,
-      body: JSON.stringify(payload),
-    }
+    payload
   );
 
-  return handleFetchResponse<UpdateApplicationResponse>(response);
+  return data as UpdateApplicationResponse;
 };
 
 export type ApplicationAdminAnswer = {
@@ -139,22 +115,14 @@ export type ApplicationAdminDetailResponse = {
 export const getApplicationAdminDetail = async (
   applicationId: number
 ): Promise<ApplicationAdminDetailResponse> => {
-  const headers = getAuthHeaders();
-
-  const response = await fetch(
-    getApiUrl(
-      API_URLS.APPLICATION_ADMIN_DETAIL.replace(
-        ":applicationId",
-        String(applicationId)
-      )
-    ),
-    {
-      method: "GET",
-      headers,
-    }
+  const { data } = await apiClient.get(
+    API_URLS.APPLICATION_ADMIN_DETAIL.replace(
+      ":applicationId",
+      String(applicationId)
+    )
   );
 
-  return handleFetchResponse<ApplicationAdminDetailResponse>(response);
+  return data as ApplicationAdminDetailResponse;
 };
 
 export type UpdateInterviewScheduleRequest = {
@@ -176,23 +144,34 @@ export const updateInterviewSchedule = async (
   applicationId: number,
   payload: UpdateInterviewScheduleRequest
 ): Promise<UpdateInterviewScheduleResponse> => {
-  const headers = getAuthHeaders();
-
-  const response = await fetch(
-    getApiUrl(
-      API_URLS.APPLICATION_INTERVIEW_SCHEDULE.replace(
-        ":applicationId",
-        String(applicationId)
-      )
+  const { data } = await apiClient.patch(
+    API_URLS.APPLICATION_INTERVIEW_SCHEDULE.replace(
+      ":applicationId",
+      String(applicationId)
     ),
-    {
-      method: "PATCH",
-      headers,
-      body: JSON.stringify(payload),
-    }
+    payload
   );
 
-  return handleFetchResponse<UpdateInterviewScheduleResponse>(response);
+  return data as UpdateInterviewScheduleResponse;
+};
+
+export type UpdateDocumentDecisionRequest = {
+  decision: "INTERVIEW" | "FAILED";
+};
+
+export const updateDocumentDecision = async (
+  applicationId: number,
+  payload: UpdateDocumentDecisionRequest
+): Promise<MessageResponse> => {
+  const { data } = await apiClient.patch(
+    API_URLS.APPLICATION_DOCUMENT_DECISION.replace(
+      ":applicationId",
+      String(applicationId)
+    ),
+    payload
+  );
+
+  return data as MessageResponse;
 };
 
 export type ApplicationComment = {
@@ -213,22 +192,14 @@ export type GetApplicationCommentsResponse = {
 export const getApplicationComments = async (
   applicationId: number
 ): Promise<GetApplicationCommentsResponse> => {
-  const headers = getAuthHeaders();
-
-  const response = await fetch(
-    getApiUrl(
-      API_URLS.APPLICATION_COMMENTS.replace(
-        ":applicationId",
-        String(applicationId)
-      )
-    ),
-    {
-      method: "GET",
-      headers,
-    }
+  const { data } = await apiClient.get(
+    API_URLS.APPLICATION_COMMENTS.replace(
+      ":applicationId",
+      String(applicationId)
+    )
   );
 
-  return handleFetchResponse<GetApplicationCommentsResponse>(response);
+  return data as GetApplicationCommentsResponse;
 };
 
 export type CreateApplicationCommentRequest = {
@@ -245,23 +216,15 @@ export const createApplicationComment = async (
   applicationId: number,
   payload: CreateApplicationCommentRequest
 ): Promise<MessageResponse> => {
-  const headers = getAuthHeaders();
-
-  const response = await fetch(
-    getApiUrl(
-      API_URLS.APPLICATION_COMMENTS.replace(
-        ":applicationId",
-        String(applicationId)
-      )
+  const { data } = await apiClient.post(
+    API_URLS.APPLICATION_COMMENTS.replace(
+      ":applicationId",
+      String(applicationId)
     ),
-    {
-      method: "POST",
-      headers,
-      body: JSON.stringify(payload),
-    }
+    payload
   );
 
-  return handleFetchResponse<MessageResponse>(response);
+  return data as MessageResponse;
 };
 
 export type UpdateApplicationCommentRequest = {
@@ -273,43 +236,114 @@ export const updateApplicationComment = async (
   commentId: number,
   payload: UpdateApplicationCommentRequest
 ): Promise<MessageResponse> => {
-  const headers = getAuthHeaders();
-
-  const response = await fetch(
-    getApiUrl(
-      `${API_URLS.APPLICATION_COMMENTS.replace(
-        ":applicationId",
-        String(applicationId)
-      )}/${commentId}`
-    ),
-    {
-      method: "PATCH",
-      headers,
-      body: JSON.stringify(payload),
-    }
+  const { data } = await apiClient.patch(
+    `${API_URLS.APPLICATION_COMMENTS.replace(
+      ":applicationId",
+      String(applicationId)
+    )}/${commentId}`,
+    payload
   );
 
-  return handleFetchResponse<MessageResponse>(response);
+  return data as MessageResponse;
 };
 
 export const deleteApplicationComment = async (
   applicationId: number,
   commentId: number
 ): Promise<MessageResponse> => {
-  const headers = getAuthHeaders();
-
-  const response = await fetch(
-    getApiUrl(
-      `${API_URLS.APPLICATION_COMMENTS.replace(
-        ":applicationId",
-        String(applicationId)
-      )}/${commentId}`
-    ),
-    {
-      method: "DELETE",
-      headers,
-    }
+  const { data } = await apiClient.delete(
+    `${API_URLS.APPLICATION_COMMENTS.replace(
+      ":applicationId",
+      String(applicationId)
+    )}/${commentId}`
   );
 
-  return handleFetchResponse<MessageResponse>(response);
+  return data as MessageResponse;
+};
+
+export type InterviewDecisionRequest = {
+  status: "PASSED" | "FAILED";
+};
+
+export const updateInterviewDecision = async (
+  applicationId: number,
+  payload: InterviewDecisionRequest
+): Promise<MessageResponse> => {
+  const { data } = await apiClient.patch(
+    API_URLS.APPLICATION_INTERVIEW_DECISION.replace(
+      ":applicationId",
+      String(applicationId)
+    ),
+    payload
+  );
+  return data as MessageResponse;
+};
+
+export type ApplicationEvaluation = {
+  evaluationId: number;
+  councilManagerId: number;
+  councilManagerName: string;
+  evaluation: string;
+  createdAt: string;
+  updatedAt?: string;
+};
+
+export type GetApplicationEvaluationsResponse = {
+  code: number;
+  message: string;
+  data: ApplicationEvaluation[];
+};
+
+export const getApplicationEvaluations = async (
+  applicationId: number
+): Promise<GetApplicationEvaluationsResponse> => {
+  const { data } = await apiClient.get(
+    API_URLS.APPLICATION_EVALUATIONS.replace(
+      ":applicationId",
+      String(applicationId)
+    )
+  );
+  return data as GetApplicationEvaluationsResponse;
+};
+
+export const createApplicationEvaluation = async (
+  applicationId: number,
+  payload: { evaluation: string }
+): Promise<MessageResponse> => {
+  const { data } = await apiClient.post(
+    API_URLS.APPLICATION_EVALUATIONS.replace(
+      ":applicationId",
+      String(applicationId)
+    ),
+    payload
+  );
+  return data as MessageResponse;
+};
+
+export const updateApplicationEvaluation = async (
+  applicationId: number,
+  evaluationId: number,
+  payload: { evaluation: string }
+): Promise<MessageResponse> => {
+  const { data } = await apiClient.patch(
+    `${API_URLS.APPLICATION_EVALUATIONS.replace(
+      ":applicationId",
+      String(applicationId)
+    )}/${evaluationId}`,
+    payload
+  );
+  return data as MessageResponse;
+};
+
+export const deleteApplicationEvaluation = async (
+  applicationId: number,
+  evaluationId: number
+): Promise<MessageResponse> => {
+  const { data } = await apiClient.delete(
+    `${API_URLS.APPLICATION_EVALUATIONS.replace(
+      ":applicationId",
+      String(applicationId)
+    )}/${evaluationId}`
+  );
+  return data as MessageResponse;
 };

@@ -16,6 +16,7 @@ interface ApplicantLocationState {
     evaluationStatus?: string;
   };
   applicant?: ApplicantDetail;
+  viewMode?: "document" | "interview";
 }
 
 const RecruitApplicantPage = () => {
@@ -25,6 +26,10 @@ const RecruitApplicantPage = () => {
   }>();
   const navigate = useNavigate();
   const location = useLocation();
+  const isInterviewPath = location.pathname
+    .split("/")
+    .filter(Boolean)
+    .includes("interview");
 
   const parsedApplicationId = applicantId ? Number(applicantId) : NaN;
   const hasValidApplicationId = Number.isFinite(parsedApplicationId);
@@ -46,6 +51,21 @@ const RecruitApplicantPage = () => {
     }
     return mapAdminApplicationDetailToApplicant(data.data);
   }, [applicantId, data?.data, state]);
+  const viewMode: "document" | "interview" =
+    isInterviewPath || state?.viewMode === "interview"
+      ? "interview"
+      : "document";
+
+  const applicantForView = useMemo<ApplicantDetail | null>(() => {
+    if (!applicant) return null;
+    if (viewMode === "interview" && !applicant.evaluationStatus) {
+      return {
+        ...applicant,
+        evaluationStatus: "INTERVIEW",
+      };
+    }
+    return applicant;
+  }, [applicant, viewMode]);
 
   const handleGoBack = () => {
     navigate(-1);
@@ -68,7 +88,7 @@ const RecruitApplicantPage = () => {
       );
     }
 
-    if (isError || !applicant) {
+    if (isError || !applicantForView) {
       const message =
         error instanceof Error
           ? error.message
@@ -82,8 +102,9 @@ const RecruitApplicantPage = () => {
 
     return (
       <RecruitApplicantMain
-        initialApplicant={applicant}
+        initialApplicant={applicantForView}
         applicationId={parsedApplicationId}
+        viewMode={viewMode}
       />
     );
   };

@@ -119,6 +119,10 @@ export const router = createBrowserRouter([
         path: "detail/:id/applicant/:applicantId",
         element: <RecruitApplicantPage />,
       },
+      {
+        path: "detail/:id/applicant/:applicantId/interview",
+        element: <RecruitApplicantPage />,
+      },
     ],
   },
   {

@@ -23,7 +23,7 @@ const LandingPage = () => {
         {/* 슬로건 */}
         <div className="text-center">
           <div className="font-bold text-3xl tracking-wide text-black-100">
-            당신이 찾던 동아리 모집 올인원 솔루션, UnionMate
+            당신이 찾던 학생회 모집 올인원 솔루션, UnionMate
           </div>
         </div>
 

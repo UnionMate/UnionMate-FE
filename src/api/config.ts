@@ -4,9 +4,7 @@ const rawServerUri =
   import.meta.env.VITE_SERVER_URI ||
   (typeof window !== "undefined" ? window.location.origin : "");
 
-export const SERVER_URI = rawServerUri
-  ? rawServerUri.replace(/\/$/, "")
-  : "";
+export const SERVER_URI = rawServerUri ? rawServerUri.replace(/\/$/, "") : "";
 
 export const API_URLS = {
   RECRUITMENT: "/backend/recruitment",
@@ -22,6 +20,19 @@ export const API_URLS = {
   APPLICATION_COMMENTS: "/backend/applications/:applicationId/comments",
   APPLICATION_INTERVIEW_SCHEDULE:
     "/backend/applications/:applicationId/interview/schedule",
+  APPLICATION_DOCUMENT_DECISION:
+    "/backend/applications/:applicationId/document/decision",
+  APPLICATION_INTERVIEW_DECISION:
+    "/backend/applications/:applicationId/interview/evaluation",
+  APPLICATION_EVALUATIONS:
+    "/backend/applications/:applicationId/evaluations",
+  COUNCIL_INVITATION_CODE:
+    "/backend/councils/:councilId/invitation-codes",
+  COUNCIL_INVITATION_JOIN: "/backend/councils/invitation/:invitationCode",
+  COUNCIL_PRESIDENT_DELEGATION: "/backend/councils/vice",
+  COUNCIL_MEMBER_REMOVE: "/backend/councils/members/:councilManagerId",
+  COUNCIL_INTERVIEW_APPLICATIONS:
+    "/backend/councils/:councilId/applications/interview",
   MY_APPLICATIONS: "/backend/applications/mine",
   COUNCIL_DOCUMENT_SCREENING:
     "/backend/councils/:councilId/applications/document-screening",

@@ -47,6 +47,7 @@ export const mapEvaluationStatusToApplicantStatus = (
 ): ApplicantStatus => {
   switch (status) {
     case "PASSED":
+    case "INTERVIEW":
       return "pass";
     case "FAILED":
       return "fail";

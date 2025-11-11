@@ -66,10 +66,10 @@ const InputUi = ({ onSuccess }: InputUiProps) => {
         <div className="space-y-4">
           <h1 className="text-3xl font-bold text-gray-900">환영합니다!</h1>
           <p className="text-2xl font-bold text-gray-900 tracking-wide">
-            생성하실 동아리명을 입력해 주세요.
+            생성하실 학생회명을 입력해 주세요.
           </p>
           <p className="text-sm text-gray-500">
-            동아리명은 동아리 관리 페이지에서 추후 수정 가능합니다.
+            학생회명은 학생회 관리 페이지에서 추후 수정 가능합니다.
           </p>
         </div>
 
@@ -77,7 +77,7 @@ const InputUi = ({ onSuccess }: InputUiProps) => {
         <div className="space-y-6 max-w-[500px] mx-auto">
           <input
             type="text"
-            placeholder="동아리명을 입력하세요"
+            placeholder="학생회명을 입력하세요"
             value={clubName}
             onChange={(e) => setClubName(e.target.value)}
             className="w-full px-4 py-3 border border-primary rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-colors duration-200 focus:outline-primary"

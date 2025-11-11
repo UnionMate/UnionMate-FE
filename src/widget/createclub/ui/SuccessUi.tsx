@@ -31,13 +31,13 @@ const SuccessUi = ({ clubName, councilId }: SuccessUiProps) => {
           <span className="text-primary">{clubName}</span>의 관리자님, 반가워요!
         </h1>
         <p className="text-2xl font-bold text-gray-900 tracking-wide">
-          지금부터 UnionMate에서 동아리를 모집하고 관리해요.
+          지금부터 UnionMate에서 학생회를 모집하고 관리해요.
         </p>
         <p className="text-sm text-gray-500">
           모집 리스트에서 현재 진행 중인 모집을 확인할 수 있습니다.
         </p>
         <p className="text-sm text-gray-500">
-          다른 관리자들과 함께 동아리 모집을 시작해보세요!
+          다른 관리자들과 함께 학생회 모집을 시작해보세요!
         </p>
       </div>
 

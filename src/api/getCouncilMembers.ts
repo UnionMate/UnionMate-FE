@@ -5,13 +5,19 @@ export type CouncilMember = {
   councilManagerId: number;
   memberName: string;
   memberEmail: string;
-  councilRole: "VICE" | "MANAGER";
+  councilRole: "VICE" | "MEMBER";
 };
 
 export type GetCouncilMembersResponse = {
   code: number;
   message: string;
   data: CouncilMember[];
+};
+
+export type MessageResponse = {
+  code: number;
+  message: string;
+  data?: unknown;
 };
 
 async function getCouncilMembers(
@@ -30,3 +36,24 @@ export function useGetCouncilMembers(councilId: number | string | undefined) {
     enabled: !!councilId,
   });
 }
+
+export const delegateCouncilPresident = async (
+  newPresidentId: number
+): Promise<MessageResponse> => {
+  const { data } = await apiClient.patch(API_URLS.COUNCIL_PRESIDENT_DELEGATION, {
+    newPresidentId,
+  });
+  return data as MessageResponse;
+};
+
+export const removeCouncilMember = async (
+  councilManagerId: number
+): Promise<MessageResponse> => {
+  const { data } = await apiClient.delete(
+    API_URLS.COUNCIL_MEMBER_REMOVE.replace(
+      ":councilManagerId",
+      String(councilManagerId)
+    )
+  );
+  return data as MessageResponse;
+};

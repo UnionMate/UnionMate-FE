@@ -27,10 +27,7 @@ const RecruitmentApplyPage = () => {
   const parsedId = recruitmentId ? Number(recruitmentId) : NaN;
   const hasValidId = Number.isFinite(parsedId);
   const [answers, setAnswers] = useState<AnswerState>({});
-  const [fixedAnswers, setFixedAnswers] = useState<Record<number, string>>({});
-  const [defaultFixedAnswers, setDefaultFixedAnswers] = useState<
-    Record<string, string>
-  >(() =>
+  const [applicantInfo, setApplicantInfo] = useState(() =>
     FIXED_FIELDS.reduce<Record<string, string>>((accumulator, field) => {
       accumulator[field.id] = "";
       return accumulator;
@@ -45,97 +42,23 @@ const RecruitmentApplyPage = () => {
 
   const detail = data?.data;
 
+  const fixedLabelSet = useMemo(
+    () => new Set(FIXED_FIELDS.map((field) => normalizeLabel(field.label))),
+    []
+  );
+
   const sortedItems: RecruitmentDetailItem[] = useMemo(() => {
-    return [...(detail?.items ?? [])].sort((a, b) => a.order - b.order);
-  }, [detail?.items]);
+    const list = detail?.items ?? [];
+    return list
+      .filter((item) => !fixedLabelSet.has(normalizeLabel(item.title)))
+      .sort((a, b) => a.order - b.order);
+  }, [detail?.items, fixedLabelSet]);
 
-  const fixedFieldEntries = useMemo(() => {
-    const usedIds = new Set<number>();
-    return FIXED_FIELDS.map((field, index) => {
-      const normalizedLabel = normalizeLabel(field.label);
-      const byLabel = sortedItems.find(
-        (item) =>
-          normalizeLabel(item.title) === normalizedLabel &&
-          !usedIds.has(item.id)
-      );
-
-      if (byLabel) {
-        usedIds.add(byLabel.id);
-        return { field, item: byLabel };
-      }
-
-      const byOrder = sortedItems.find(
-        (item) =>
-          item.order === index + 1 &&
-          item.type === "TEXT" &&
-          item.required &&
-          !usedIds.has(item.id)
-      );
-
-      if (byOrder) {
-        usedIds.add(byOrder.id);
-        return { field, item: byOrder };
-      }
-
-      return { field, item: null };
-    });
-  }, [sortedItems]);
-
-  const fixedItems = useMemo(
-    () =>
-      fixedFieldEntries
-        .map(({ item }) => item)
-        .filter((item): item is RecruitmentDetailItem => Boolean(item)),
-    [fixedFieldEntries]
-  );
-
-  const fixedItemIdSet = useMemo(
-    () => new Set(fixedItems.map((item) => item.id)),
-    [fixedItems]
-  );
-
-  const dynamicItems = useMemo(
-    () => sortedItems.filter((item) => !fixedItemIdSet.has(item.id)),
-    [sortedItems, fixedItemIdSet]
-  );
-
-  const fixedFieldCards = useMemo(() => {
-    return fixedFieldEntries.map(({ field, item }, index) => {
-      if (item) {
-        return {
-          key: String(item.id),
-          item,
-          field,
-          isCustom: false,
-        } as const;
-      }
-
-      const syntheticItem: RecruitmentDetailItem = {
-        id: -(index + 1),
-        type: "TEXT",
-        required: true,
-        title: field.label,
-        order: index + 1,
-        description: field.placeholder ?? "",
-      };
-
-      return {
-        key: `synthetic-${field.id}`,
-        item: syntheticItem,
-        field,
-        isCustom: true,
-      } as const;
-    });
-  }, [fixedFieldEntries]);
+  const dynamicItems = sortedItems;
 
   useEffect(() => {
     if (!detail?.items) return;
     const initialAnswers: AnswerState = {};
-    const initialFixed: Record<number, string> = {};
-
-    fixedItems.forEach((item) => {
-      initialFixed[item.id] = "";
-    });
 
     dynamicItems.forEach((item) => {
       if (item.type === "SELECT") {
@@ -146,10 +69,31 @@ const RecruitmentApplyPage = () => {
         initialAnswers[item.id] = "";
       }
     });
-
-    setFixedAnswers(initialFixed);
     setAnswers(initialAnswers);
-  }, [detail?.id, detail?.items, fixedItems, dynamicItems]);
+  }, [detail?.id, detail?.items, dynamicItems]);
+
+  const handleApplicantInfoChange = (fieldId: string, value: string) => {
+    if (fieldId === "applicant-phone") {
+      const digitsOnly = value.replace(/\D/g, "").slice(0, 11);
+      const formatted = digitsOnly.replace(
+        /^(\d{0,3})(\d{0,4})(\d{0,4}).*$/,
+        (_match, p1, p2, p3) => {
+          if (p3) return `${p1}-${p2}-${p3}`;
+          if (p2) return `${p1}-${p2}`;
+          return p1;
+        }
+      );
+      setApplicantInfo((prev) => ({
+        ...prev,
+        [fieldId]: formatted,
+      }));
+      return;
+    }
+    setApplicantInfo((prev) => ({
+      ...prev,
+      [fieldId]: value,
+    }));
+  };
 
   const handleTextChange = (itemId: number, value: string) => {
     setAnswers((prev) => ({
@@ -198,15 +142,15 @@ const RecruitmentApplyPage = () => {
     });
   };
 
-  const handleFixedAnswerChange = (itemId: number, value: string) => {
-    setFixedAnswers((prev) => ({
-      ...prev,
-      [itemId]: value,
-    }));
-  };
-
   const requiredUnansweredCount = useMemo(() => {
     let count = 0;
+
+    FIXED_FIELDS.forEach((field) => {
+      const value = applicantInfo[field.id] ?? "";
+      if (value.trim().length === 0) {
+        count += 1;
+      }
+    });
 
     dynamicItems.forEach((item) => {
       if (!item.required || item.type === "ANNOUNCEMENT") return;
@@ -229,31 +173,8 @@ const RecruitmentApplyPage = () => {
       }
     });
 
-    fixedItems.forEach((item) => {
-      const value = fixedAnswers[item.id] ?? "";
-      if (item.required && value.trim().length === 0) {
-        count += 1;
-      }
-    });
-
-    fixedFieldEntries
-      .filter(({ item }) => !item)
-      .forEach(({ field }) => {
-        const value = defaultFixedAnswers[field.id] ?? "";
-        if (value.trim().length === 0) {
-          count += 1;
-        }
-      });
-
     return count;
-  }, [
-    answers,
-    fixedAnswers,
-    dynamicItems,
-    fixedItems,
-    fixedFieldEntries,
-    defaultFixedAnswers,
-  ]);
+  }, [answers, applicantInfo, dynamicItems]);
 
   const { mutateAsync: submitApplicationMutate, isPending } = useMutation({
     mutationFn: ({
@@ -287,28 +208,11 @@ const RecruitmentApplyPage = () => {
       return;
     }
 
-    const applicantInfo = FIXED_FIELDS.reduce(
-      (accumulator, field) => {
-        const matched = fixedFieldEntries.find(
-          (entry) => entry.field.id === field.id
-        );
-        const value = matched?.item
-          ? fixedAnswers[matched.item.id] ?? ""
-          : defaultFixedAnswers[field.id] ?? "";
-
-        if (field.id === "applicant-name") accumulator.name = value;
-        if (field.id === "applicant-email") accumulator.email = value;
-        if (field.id === "applicant-phone") accumulator.tel = value;
-
-        return accumulator;
-      },
-      { name: "", email: "", tel: "" }
-    );
-
-    const fixedAnswersPayload = fixedItems.map((item) => ({
-      itemId: item.id,
-      text: fixedAnswers[item.id] ?? "",
-    }));
+    const applicantPayload = {
+      name: applicantInfo["applicant-name"] ?? "",
+      email: applicantInfo["applicant-email"] ?? "",
+      tel: applicantInfo["applicant-phone"] ?? "",
+    };
 
     const answersPayload = dynamicItems
       .filter((item) => item.type !== "ANNOUNCEMENT")
@@ -338,15 +242,15 @@ const RecruitmentApplyPage = () => {
         };
       });
 
-    const payloadAnswers = [...fixedAnswersPayload, ...answersPayload];
+    const payloadAnswers = [...answersPayload];
 
     try {
       await submitApplicationMutate({
         recruitmentId: parsedId,
         request: {
-          name: applicantInfo.name,
-          email: applicantInfo.email,
-          tel: applicantInfo.tel,
+          name: applicantPayload.name,
+          email: applicantPayload.email,
+          tel: applicantPayload.tel,
           answers: payloadAnswers,
         },
       });
@@ -411,28 +315,37 @@ const RecruitmentApplyPage = () => {
               지원자 기본 정보
             </h2>
             <div className="flex flex-col gap-4">
-              {fixedFieldCards.map(({ key, item, field, isCustom }) => (
-                <ApplicationQuestionCard
-                  key={key}
-                  item={item}
-                  value={
-                    isCustom
-                      ? defaultFixedAnswers[field.id]
-                      : fixedAnswers[item.id]
-                  }
-                  onTextChange={(value) => {
-                    if (isCustom) {
-                      setDefaultFixedAnswers((previous) => ({
-                        ...previous,
-                        [field.id]: value,
-                      }));
-                    } else {
-                      handleFixedAnswerChange(item.id, value);
-                    }
-                  }}
-                  onDateChange={() => undefined}
-                  onSelectChange={() => undefined}
-                />
+              {FIXED_FIELDS.map((field) => (
+                <div
+                  key={field.id}
+                  className="rounded-3xl border border-primary/15 bg-white px-6 py-5 shadow-[0px_12px_24px_rgba(0,0,0,0.04)]"
+                >
+                  <label className="flex flex-col gap-2">
+                    <span className="flex items-center gap-1 text-title-16-semibold text-black-90">
+                      {field.label}
+                      <span className="text-error">*</span>
+                    </span>
+                    <input
+                      type={field.type}
+                      value={applicantInfo[field.id]}
+                      onChange={(event) =>
+                        handleApplicantInfoChange(field.id, event.target.value)
+                      }
+                      placeholder={
+                        field.id === "applicant-phone"
+                          ? "000-0000-0000"
+                          : field.placeholder
+                      }
+                      inputMode={
+                        field.id === "applicant-phone" ? "numeric" : undefined
+                      }
+                      maxLength={
+                        field.id === "applicant-phone" ? 13 : undefined
+                      }
+                      className="rounded-2xl border border-black-15 px-4 py-3 text-15-medium text-black-80 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    />
+                  </label>
+                </div>
               ))}
             </div>
           </div>

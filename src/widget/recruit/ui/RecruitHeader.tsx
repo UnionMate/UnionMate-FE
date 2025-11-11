@@ -8,7 +8,7 @@ const RecruitHeader = () => {
         <div className="flex text-[28px] font-semibold">모집</div>
       </div>
       <div className="flex text-16-medium items-center text-gray-400">
-        동아리 모집과 지원서 양식을 연결하여 모집을 진행할 수 있습니다.
+        학생회 모집과 지원서 양식을 연결하여 모집을 진행할 수 있습니다.
       </div>
     </div>
   );

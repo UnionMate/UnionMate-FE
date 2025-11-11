@@ -109,6 +109,7 @@ export const mapAdminApplicationDetailToApplicant = (
     ],
     questions: (detail.answers ?? []).map(normalizeAnswer),
     memos: [],
+    evaluationStatus: detail.stage?.evaluationStatus,
     interview: {
       date: formatDisplayDate(interviewTimeIso),
       time: formatDisplayTime(interviewTimeIso),

@@ -46,7 +46,7 @@ const Sidebar = ({ isCollapsed, onToggle }: SidebarProps) => {
     },
     {
       icon: Settings,
-      label: "동아리 관리",
+      label: "학생회 관리",
       path: councilId ? `/${councilId}/setting` : undefined,
     },
   ];

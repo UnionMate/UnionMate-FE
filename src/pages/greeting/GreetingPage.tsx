@@ -26,7 +26,7 @@ const GreetingPage = () => {
               <div className="space-y-6">
                 <div className="text-2xl font-bold">관리자 로그인하기</div>
                 <div className="leading-relaxed text-lg text-white/90">
-                  동아리 모집을 관리하고 <br /> 워크스페이스를 운영해보세요.
+                  학생회 모집을 관리하고 <br /> 워크스페이스를 운영해보세요.
                 </div>
               </div>
 

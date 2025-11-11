@@ -40,6 +40,7 @@ export interface ApplicantDetail {
   profile: ApplicantProfileField[];
   questions: ApplicantQuestion[];
   memos: ApplicantMemo[];
+  evaluationStatus?: string;
   interview: {
     date: string;
     time: string;

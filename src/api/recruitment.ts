@@ -1,9 +1,4 @@
-import {
-  API_URLS,
-  getApiUrl,
-  getAuthHeaders,
-  handleFetchResponse,
-} from "./config";
+import { API_URLS, apiClient } from "./config";
 
 export type RecruitmentItemType =
   | "TEXT"
@@ -56,28 +51,17 @@ export type GetRecruitmentsResponse = {
 };
 
 export const createRecruitment = async (
-  data: CreateRecruitmentRequest
+  payload: CreateRecruitmentRequest
 ): Promise<CreateRecruitmentResponse> => {
-  const headers = getAuthHeaders();
+  const { data } = await apiClient.post(API_URLS.RECRUITMENT, payload);
 
-  const response = await fetch(getApiUrl(API_URLS.RECRUITMENT), {
-    method: "POST",
-    headers,
-    body: JSON.stringify(data),
-  });
-
-  return handleFetchResponse<CreateRecruitmentResponse>(response);
+  return data as CreateRecruitmentResponse;
 };
 
 export const getRecruitments = async (): Promise<GetRecruitmentsResponse> => {
-  const headers = getAuthHeaders();
+  const { data } = await apiClient.get(API_URLS.RECRUITMENT);
 
-  const response = await fetch(getApiUrl(API_URLS.RECRUITMENT), {
-    method: "GET",
-    headers,
-  });
-
-  return handleFetchResponse<GetRecruitmentsResponse>(response);
+  return data as GetRecruitmentsResponse;
 };
 
 export type ActivateRecruitmentRequest = {
@@ -100,23 +84,15 @@ export const activateRecruitment = async (
   recruitmentId: number,
   payload: ActivateRecruitmentRequest
 ): Promise<ActivateRecruitmentResponse> => {
-  const headers = getAuthHeaders();
-
-  const response = await fetch(
-    getApiUrl(
-      API_URLS.RECRUITMENT_ACTIVATION.replace(
-        ":recruitmentId",
-        String(recruitmentId)
-      )
+  const { data } = await apiClient.post(
+    API_URLS.RECRUITMENT_ACTIVATION.replace(
+      ":recruitmentId",
+      String(recruitmentId)
     ),
-    {
-      method: "POST",
-      headers,
-      body: JSON.stringify(payload),
-    }
+    payload
   );
 
-  return handleFetchResponse<ActivateRecruitmentResponse>(response);
+  return data as ActivateRecruitmentResponse;
 };
 
 export type DeleteRecruitmentResponse = {
@@ -128,17 +104,11 @@ export type DeleteRecruitmentResponse = {
 export const deleteRecruitment = async (
   recruitmentId: number
 ): Promise<DeleteRecruitmentResponse> => {
-  const headers = getAuthHeaders();
-
-  const response = await fetch(
-    getApiUrl(`${API_URLS.RECRUITMENT}/${recruitmentId}`),
-    {
-      method: "DELETE",
-      headers,
-    }
+  const { data } = await apiClient.delete(
+    `${API_URLS.RECRUITMENT}/${recruitmentId}`
   );
 
-  return handleFetchResponse<DeleteRecruitmentResponse>(response);
+  return data as DeleteRecruitmentResponse;
 };
 
 export type RecruitmentDetailItem = {
@@ -173,17 +143,11 @@ export type RecruitmentDetailResponse = {
 export const getRecruitmentDetail = async (
   recruitmentId: number
 ): Promise<RecruitmentDetailResponse> => {
-  const headers = getAuthHeaders();
-
-  const response = await fetch(
-    getApiUrl(`${API_URLS.RECRUITMENT}/${recruitmentId}`),
-    {
-      method: "GET",
-      headers,
-    }
+  const { data } = await apiClient.get(
+    `${API_URLS.RECRUITMENT}/${recruitmentId}`
   );
 
-  return handleFetchResponse<RecruitmentDetailResponse>(response);
+  return data as RecruitmentDetailResponse;
 };
 
 export type UpdateRecruitmentRequest = CreateRecruitmentRequest;
@@ -191,20 +155,14 @@ export type UpdateRecruitmentResponse = CreateRecruitmentResponse;
 
 export const updateRecruitment = async (
   recruitmentId: number,
-  data: UpdateRecruitmentRequest
+  payload: UpdateRecruitmentRequest
 ): Promise<UpdateRecruitmentResponse> => {
-  const headers = getAuthHeaders();
-
-  const response = await fetch(
-    getApiUrl(`${API_URLS.RECRUITMENT}/${recruitmentId}`),
-    {
-      method: "PATCH",
-      headers,
-      body: JSON.stringify(data),
-    }
+  const { data } = await apiClient.patch(
+    `${API_URLS.RECRUITMENT}/${recruitmentId}`,
+    payload
   );
 
-  return handleFetchResponse<UpdateRecruitmentResponse>(response);
+  return data as UpdateRecruitmentResponse;
 };
 
 export type ApplicationAnswerPayload = {
@@ -233,18 +191,10 @@ export const submitApplication = async (
   recruitmentId: number,
   payload: SubmitApplicationRequest
 ): Promise<SubmitApplicationResponse> => {
-  const headers = getAuthHeaders();
-
-  const response = await fetch(
-    getApiUrl(
-      API_URLS.APPLICATIONS.replace(":recruitmentId", String(recruitmentId))
-    ),
-    {
-      method: "POST",
-      headers,
-      body: JSON.stringify(payload),
-    }
+  const { data } = await apiClient.post(
+    API_URLS.APPLICATIONS.replace(":recruitmentId", String(recruitmentId)),
+    payload
   );
 
-  return handleFetchResponse<SubmitApplicationResponse>(response);
+  return data as SubmitApplicationResponse;
 };
