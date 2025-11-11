@@ -1,7 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import clsx from "clsx";
 import { Copy, MailOpen, RefreshCw } from "lucide-react";
 import { useParams } from "react-router-dom";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useGetCouncilMembers } from "@/api/getCouncilMembers";
+import {
+  getCouncilInvitationCode,
+  refreshCouncilInvitationCode,
+} from "@/api/councilInvitationCode";
 
 type TabKey = "admins" | "invite";
 
@@ -27,10 +33,15 @@ const generateInviteCode = () =>
 
 const SettingMain = () => {
   const { councilId } = useParams<{ councilId: string }>();
+  const parsedCouncilId = councilId ? Number(councilId) : NaN;
+  const hasValidCouncilId = Number.isFinite(parsedCouncilId);
   const [activeTab, setActiveTab] = useState<TabKey>("admins");
   const [selectedAdminIds, setSelectedAdminIds] = useState<number[]>([]);
   const [inviteCode, setInviteCode] = useState(generateInviteCode());
   const [inviteMessage, setInviteMessage] = useState("");
+  const inviteMessageTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null
+  );
 
   const { data: membersData, isLoading } = useGetCouncilMembers(councilId);
 
@@ -61,6 +72,63 @@ const SettingMain = () => {
       selectedAdminIds.length > 0 &&
       selectedAdminIds.length < selectableAdmins.length;
   }, [admins, selectedAdminIds.length]);
+
+  const showInviteMessage = (message: string) => {
+    setInviteMessage(message);
+    if (inviteMessageTimeoutRef.current) {
+      clearTimeout(inviteMessageTimeoutRef.current);
+    }
+    inviteMessageTimeoutRef.current = setTimeout(() => {
+      setInviteMessage("");
+    }, 2500);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (inviteMessageTimeoutRef.current) {
+        clearTimeout(inviteMessageTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const {
+    data: inviteCodeResponse,
+    isLoading: isInviteLoading,
+    refetch: refetchInviteCode,
+  } = useQuery({
+    queryKey: ["council-invite-code", parsedCouncilId],
+    queryFn: () => getCouncilInvitationCode(parsedCouncilId),
+    enabled: hasValidCouncilId,
+    staleTime: 1000 * 60,
+  });
+
+  useEffect(() => {
+    const fetchedCode = inviteCodeResponse?.data?.invitationCode;
+    if (typeof fetchedCode === "string" && fetchedCode.trim().length > 0) {
+      setInviteCode(fetchedCode);
+    }
+  }, [inviteCodeResponse?.data?.invitationCode]);
+
+  const {
+    mutate: regenerateInviteCode,
+    isPending: isRefreshingInvite,
+  } = useMutation({
+    mutationFn: (currentCode: string) =>
+      refreshCouncilInvitationCode(parsedCouncilId, {
+        invitationCode: currentCode,
+      }),
+    onSuccess: (response) => {
+      const nextCode = response.data?.invitationCode;
+      if (nextCode) {
+        setInviteCode(nextCode);
+      }
+      showInviteMessage("새 초대 코드가 발급되었어요.");
+      refetchInviteCode();
+    },
+    onError: () => {
+      showInviteMessage("초대 코드 갱신에 실패했습니다. 다시 시도해주세요.");
+    },
+  });
 
   const toggleSelectAll = (checked: boolean) => {
     if (checked) {
@@ -99,26 +167,39 @@ const SettingMain = () => {
   };
 
   const handleCopyInviteCode = async () => {
+    if (!inviteCode) {
+      showInviteMessage("초대 코드를 불러온 뒤 다시 시도해주세요.");
+      return;
+    }
     if (typeof navigator === "undefined") return;
     try {
       if ("clipboard" in navigator) {
         await navigator.clipboard.writeText(inviteCode);
-        setInviteMessage("초대 코드가 복사되었어요.");
+        showInviteMessage("초대 코드가 복사되었어요.");
       } else {
-        setInviteMessage("복사를 지원하지 않는 환경이에요.");
+        showInviteMessage("복사를 지원하지 않는 환경이에요.");
       }
     } catch (error) {
       console.error(error);
-      setInviteMessage("코드 복사에 실패했어요. 다시 시도해주세요.");
-    } finally {
-      setTimeout(() => setInviteMessage(""), 2500);
+      showInviteMessage("코드 복사에 실패했어요. 다시 시도해주세요.");
     }
   };
 
   const handleRefreshInviteCode = () => {
-    setInviteCode(generateInviteCode());
-    setInviteMessage("새 초대 코드가 발급되었어요.");
-    setTimeout(() => setInviteMessage(""), 2500);
+    if (isRefreshingInvite) {
+      return;
+    }
+    if (!hasValidCouncilId) {
+      const fallbackCode = generateInviteCode();
+      setInviteCode(fallbackCode);
+      showInviteMessage("새 초대 코드가 발급되었어요.");
+      return;
+    }
+    if (!inviteCode) {
+      showInviteMessage("초대 코드를 불러온 뒤 다시 시도해주세요.");
+      return;
+    }
+    regenerateInviteCode(inviteCode);
   };
 
   const selectedCount = selectedAdminIds.length;
@@ -264,28 +345,44 @@ const SettingMain = () => {
                   <input
                     readOnly
                     value={inviteCode}
-                    className="flex-1 bg-transparent text-center text-title-20-bold tracking-[0.3em] text-gray-900 outline-none"
+                    placeholder={
+                      isInviteLoading ? "초대 코드를 불러오는 중..." : undefined
+                    }
+                    className="flex-1 bg-transparent text-center text-lg font-semibold tracking-[0.08em] text-gray-900 outline-none sm:text-2xl"
                   />
                   <button
                     type="button"
                     onClick={handleRefreshInviteCode}
-                    className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 text-gray-500 transition hover:bg-gray-200 hover:text-gray-700"
+                    disabled={isInviteLoading || isRefreshingInvite}
+                    className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 text-gray-500 transition hover:bg-gray-200 hover:text-gray-700 disabled:cursor-not-allowed disabled:opacity-60"
                     aria-label="초대 코드 새로 발급"
                   >
-                    <RefreshCw className="h-5 w-5" />
+                    <RefreshCw
+                      className={clsx(
+                        "h-5 w-5",
+                        (isInviteLoading || isRefreshingInvite) && "animate-spin"
+                      )}
+                    />
                   </button>
                 </div>
                 <div className="flex w-full flex-col gap-3">
                   <button
                     type="button"
                     onClick={handleCopyInviteCode}
-                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3 text-16-semibold text-white transition hover:bg-primary/90"
+                    disabled={
+                      !inviteCode || isInviteLoading || isRefreshingInvite
+                    }
+                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3 text-16-semibold text-white transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     <Copy className="h-5 w-5" strokeWidth={1.8} />
                     복사
                   </button>
                   {inviteMessage && (
-                    <p className="text-14-semibold text-primary">
+                    <p
+                      className="text-14-semibold text-primary"
+                      role="status"
+                      aria-live="polite"
+                    >
                       {inviteMessage}
                     </p>
                   )}
