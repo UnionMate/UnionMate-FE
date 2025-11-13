@@ -6,6 +6,7 @@ export type InterviewApplicant = {
   tel: string;
   appliedAt: string;
   evaluationStatus: string;
+  recruitmentStatus?: string;
 };
 
 export type GetInterviewApplicantsResponse = {

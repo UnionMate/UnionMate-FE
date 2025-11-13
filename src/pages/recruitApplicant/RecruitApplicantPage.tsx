@@ -1,10 +1,15 @@
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import RecruitApplicantMain from "@/widget/recruitApplicant/ui/RecruitApplicantMain";
 import { getApplicationAdminDetail } from "@/api/application";
 import { mapAdminApplicationDetailToApplicant } from "@/lib/applications/mapAdminApplicationDetail";
+import {
+  buildApplicantStageKey,
+  useApplicantStageStore,
+} from "@/shared/stores/useApplicantStageStore";
+import { mapEvaluationStatusToApplicantStatus } from "@/lib/applications/statusMeta";
 import type { ApplicantDetail } from "@/widget/recruitdetail/types";
 
 interface ApplicantLocationState {
@@ -20,8 +25,8 @@ interface ApplicantLocationState {
 }
 
 const RecruitApplicantPage = () => {
-  const { applicantId } = useParams<{
-    id: string;
+  const { councilId, applicantId } = useParams<{
+    councilId: string;
     applicantId: string;
   }>();
   const navigate = useNavigate();
@@ -31,16 +36,20 @@ const RecruitApplicantPage = () => {
     .filter(Boolean)
     .includes("interview");
 
+  const parsedCouncilId = councilId ? Number(councilId) : NaN;
   const parsedApplicationId = applicantId ? Number(applicantId) : NaN;
   const hasValidApplicationId = Number.isFinite(parsedApplicationId);
 
   const state = location.state as ApplicantLocationState | null;
+  const queryClient = useQueryClient();
 
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ["application-admin-detail", parsedApplicationId],
     queryFn: () => getApplicationAdminDetail(parsedApplicationId),
     enabled: hasValidApplicationId,
   });
+
+  const getStage = useApplicantStageStore((state) => state.getStage);
 
   const applicant = useMemo<ApplicantDetail | null>(() => {
     if (state?.applicant && state.applicant.id === applicantId) {
@@ -51,21 +60,68 @@ const RecruitApplicantPage = () => {
     }
     return mapAdminApplicationDetailToApplicant(data.data);
   }, [applicantId, data?.data, state]);
+  const stageKey = useMemo(() => {
+    const email = state?.applicantInfo?.email;
+    const appliedAt = state?.applicantInfo?.appliedAt;
+    if (!email || !appliedAt) {
+      return null;
+    }
+    return buildApplicantStageKey(email, appliedAt);
+  }, [state?.applicantInfo?.email, state?.applicantInfo?.appliedAt]);
+
+  const applicantStage = useMemo(() => {
+    if (!stageKey) {
+      return undefined;
+    }
+    return getStage(stageKey);
+  }, [getStage, stageKey]);
+
+  const applicantWithStage = useMemo<ApplicantDetail | null>(() => {
+    if (!applicant) return null;
+    if (!applicantStage) {
+      return applicant;
+    }
+    const nextStatus =
+      applicantStage.status ??
+      mapEvaluationStatusToApplicantStatus(
+        applicantStage.evaluationStatus ?? applicant.evaluationStatus,
+        applicantStage.recruitmentStatus
+      );
+    return {
+      ...applicant,
+      status: nextStatus,
+      evaluationStatus:
+        applicantStage.evaluationStatus ?? applicant.evaluationStatus,
+    };
+  }, [applicant, applicantStage]);
+
   const viewMode: "document" | "interview" =
     isInterviewPath || state?.viewMode === "interview"
       ? "interview"
       : "document";
 
   const applicantForView = useMemo<ApplicantDetail | null>(() => {
-    if (!applicant) return null;
-    if (viewMode === "interview" && !applicant.evaluationStatus) {
+    if (!applicantWithStage) return null;
+    if (viewMode === "interview" && !applicantWithStage.evaluationStatus) {
       return {
-        ...applicant,
+        ...applicantWithStage,
         evaluationStatus: "INTERVIEW",
       };
     }
-    return applicant;
-  }, [applicant, viewMode]);
+    return applicantWithStage;
+  }, [applicantWithStage, viewMode]);
+
+  const invalidateLists = useCallback(() => {
+    if (!Number.isFinite(parsedCouncilId)) {
+      return;
+    }
+    queryClient.invalidateQueries({
+      queryKey: ["document-screening", parsedCouncilId],
+    });
+    queryClient.invalidateQueries({
+      queryKey: ["interview-applicants", parsedCouncilId],
+    });
+  }, [parsedCouncilId, queryClient]);
 
   const handleGoBack = () => {
     navigate(-1);
@@ -105,6 +161,8 @@ const RecruitApplicantPage = () => {
         initialApplicant={applicantForView}
         applicationId={parsedApplicationId}
         viewMode={viewMode}
+        stageKey={stageKey}
+        onInvalidateLists={invalidateLists}
       />
     );
   };

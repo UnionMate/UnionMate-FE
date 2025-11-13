@@ -1,9 +1,11 @@
 import { useParams } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { getRecruitments } from "@/api/recruitment";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { getRecruitments, sendRecruitmentMail } from "@/api/recruitment";
 import RecruitDetailHeader from "@/widget/recruitdetail/ui/RecruitDetailHeader";
 import RecruitDetailMain from "@/widget/recruitdetail/ui/RecruitDetailMain";
-import RecruitDetailMainHeader from "@/widget/recruitdetail/ui/RecruitDetailMainHeader";
+import RecruitDetailMainHeader, {
+  type MailVariant,
+} from "@/widget/recruitdetail/ui/RecruitDetailMainHeader";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -27,10 +29,38 @@ const RecruitDetailPage = () => {
   const [activeTab, setActiveTab] = useState<"서류 심사" | "면접">("서류 심사");
   const [documentCount, setDocumentCount] = useState(0);
   const [interviewCount, setInterviewCount] = useState(0);
-  const [isMailReady, setIsMailReady] = useState(false);
+  const [documentMailReady, setDocumentMailReady] = useState(false);
+  const [finalMailReady, setFinalMailReady] = useState(false);
 
-  const handleSendMail = () => {
-    toast.success("지원자 최종 합불 메일 발송을 시작했습니다.");
+  const { mutate: triggerSendMail, isPending: isMailSending } = useMutation({
+    mutationFn: (variant: MailVariant) => {
+      if (!Number.isFinite(parsedId)) {
+        throw new Error("유효하지 않은 모집입니다.");
+      }
+      return sendRecruitmentMail(parsedId, { type: variant });
+    },
+    onSuccess: (_, variant) => {
+      toast.success(
+        variant === "interview"
+          ? "지원자 면접 메일 발송을 시작했습니다."
+          : "지원자 최종 합불 메일 발송을 시작했습니다."
+      );
+    },
+    onError: (error) => {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "메일 발송을 시작하지 못했습니다.";
+      toast.error(message);
+    },
+  });
+
+  const handleSendMail = (variant: MailVariant) => {
+    if (!Number.isFinite(parsedId)) {
+      toast.error("유효하지 않은 모집입니다.");
+      return;
+    }
+    triggerSendMail(variant);
   };
 
   return (
@@ -41,15 +71,22 @@ const RecruitDetailPage = () => {
         onTabChange={setActiveTab}
         documentCount={documentCount}
         interviewCount={interviewCount}
-        mailReady={isMailReady}
+        documentMailReady={documentMailReady}
+        finalMailReady={finalMailReady}
+        isSendingMail={isMailSending}
         onSendMail={handleSendMail}
       />
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
         <RecruitDetailMain
           activeTab={activeTab}
-          onDocumentStateChange={(count, allDecided) => {
+          onDocumentStateChange={({
+            count,
+            canSendInterviewMail,
+            allDecided,
+          }) => {
             setDocumentCount(count);
-            setIsMailReady(allDecided);
+            setDocumentMailReady(canSendInterviewMail);
+            setFinalMailReady(allDecided);
           }}
           onInterviewStateChange={(count) => setInterviewCount(count)}
         />

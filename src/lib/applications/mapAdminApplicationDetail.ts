@@ -97,7 +97,8 @@ export const mapAdminApplicationDetailToApplicant = (
     id: String(detail.applicationId),
     name: applicantName,
     status: mapEvaluationStatusToApplicantStatus(
-      detail.stage?.evaluationStatus
+      detail.stage?.evaluationStatus,
+      detail.stage?.recruitmentStatus
     ),
     appliedTrack: recruitmentName,
     submittedAt: detail.submittedAt ?? "",

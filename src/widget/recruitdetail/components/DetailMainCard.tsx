@@ -27,7 +27,8 @@ interface DetailMainCardProps {
   onStatusChange: (
     applicantId: string,
     status: ApplicantStatus,
-    evaluationStatus?: string
+    evaluationStatus?: string,
+    recruitmentStatus?: string
   ) => void;
   onInterviewUpdate: (
     applicantId: string,
@@ -176,8 +177,15 @@ const DetailMainCard = ({
         toast.success(
           `서류 평가 결과가 ${statusLabelMap[decision]}으로 확정되었습니다.`
         );
-        const evaluationStatus = decision === "pass" ? "INTERVIEW" : "FAILED";
-        onStatusChange(applicant.id, decision, evaluationStatus);
+        const evaluationStatus = decision === "pass" ? "SUBMITTED" : "FAILED";
+        const recruitmentStatus =
+          decision === "pass" ? "INTERVIEW" : "DOCUMENT_SCREENING";
+        onStatusChange(
+          applicant.id,
+          decision,
+          evaluationStatus,
+          recruitmentStatus
+        );
         setPendingDecision(null);
       },
       onError: (error) => {

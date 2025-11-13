@@ -1,13 +1,18 @@
+import { useState } from "react";
 import SwitchTab from "../components/SwitchTab";
 import Pagination from "../components/Pagination";
+
+export type MailVariant = "interview" | "final";
 
 type RecruitDetailMainHeaderProps = {
   activeTab: "서류 심사" | "면접";
   onTabChange: (tab: "서류 심사" | "면접") => void;
   documentCount: number;
   interviewCount: number;
-  mailReady: boolean;
-  onSendMail: () => void;
+  documentMailReady: boolean;
+  finalMailReady: boolean;
+  isSendingMail: boolean;
+  onSendMail: (variant: MailVariant) => void;
 };
 
 const RecruitDetailMainHeader = ({
@@ -15,7 +20,9 @@ const RecruitDetailMainHeader = ({
   onTabChange,
   documentCount,
   interviewCount,
-  mailReady,
+  documentMailReady,
+  finalMailReady,
+  isSendingMail,
   onSendMail,
 }: RecruitDetailMainHeaderProps) => {
   const tabs = [
@@ -23,7 +30,34 @@ const RecruitDetailMainHeader = ({
     { name: "면접", count: interviewCount },
   ];
 
-  const stepStatus = mailReady ? "mail" : "evaluation";
+  const isDocumentTab = activeTab === "서류 심사";
+  const buttonLabel = isDocumentTab
+    ? "지원자 면접 메일 발송"
+    : "최종 합불 메일 전송";
+  const isButtonDisabled = isDocumentTab ? !documentMailReady : !finalMailReady;
+  const isDisabled = isButtonDisabled || isSendingMail;
+  const buttonText = isSendingMail ? "발송 중..." : buttonLabel;
+  const [pendingVariant, setPendingVariant] = useState<MailVariant | null>(
+    null
+  );
+
+  const handleButtonClick = () => {
+    if (isDisabled) {
+      return;
+    }
+    setPendingVariant(isDocumentTab ? "interview" : "final");
+  };
+
+  const handleCloseModal = () => {
+    if (isSendingMail) return;
+    setPendingVariant(null);
+  };
+
+  const handleConfirmModal = () => {
+    if (!pendingVariant || isSendingMail) return;
+    onSendMail(pendingVariant);
+    setPendingVariant(null);
+  };
 
   return (
     <div className="flex flex-col w-full gap-4">
@@ -36,57 +70,55 @@ const RecruitDetailMainHeader = ({
         <Pagination />
       </div>
 
-      <div className="flex w-full items-center justify-between rounded-2xl border border-gray-100 bg-white px-4 py-3">
-        <div className="flex items-center gap-6">
-          <StepIndicator
-            index={1}
-            label="지원자 평가"
-            active={stepStatus === "evaluation"}
-          />
-          <StepIndicator
-            index={2}
-            label="최종 합불 메일 전송"
-            active={stepStatus === "mail"}
-          />
-        </div>
-        <button
-          type="button"
-          onClick={onSendMail}
-          disabled={!mailReady}
-          className="rounded-2xl bg-primary px-5 py-2 text-sm font-semibold text-white transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-40"
-        >
-          지원자 최종 합불 메일 발송
-        </button>
-      </div>
-    </div>
-  );
-};
+      <button
+        type="button"
+        onClick={handleButtonClick}
+        disabled={isDisabled}
+        className="self-end rounded-2xl bg-primary px-5 py-2 text-sm font-semibold text-white transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-40"
+      >
+        {buttonText}
+      </button>
 
-const StepIndicator = ({
-  index,
-  label,
-  active,
-}: {
-  index: number;
-  label: string;
-  active: boolean;
-}) => {
-  return (
-    <div className="flex items-center gap-2">
-      <span
-        className={`flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold text-white ${
-          active ? "bg-primary" : "bg-gray-300"
-        }`}
-      >
-        {index}
-      </span>
-      <span
-        className={`text-14-medium ${
-          active ? "text-primary" : "text-gray-500"
-        }`}
-      >
-        {label}
-      </span>
+      {pendingVariant && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+          onClick={handleCloseModal}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            className="w-full max-w-[360px] rounded-2xl bg-white p-6 shadow-xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="flex flex-col gap-3">
+              <p className="text-lg font-semibold text-gray-900">
+                정말 메일을 발송하시겠습니까?
+              </p>
+              <p className="text-sm text-gray-600">
+                발송을 시작하면 즉시 처리되며 취소할 수 없습니다.
+              </p>
+            </div>
+            <div className="mt-6 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={handleCloseModal}
+                disabled={isSendingMail}
+                className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-600 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                취소
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmModal}
+                disabled={isSendingMail}
+                className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                확인
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

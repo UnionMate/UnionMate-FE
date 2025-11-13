@@ -9,6 +9,8 @@ export const SERVER_URI = rawServerUri ? rawServerUri.replace(/\/$/, "") : "";
 export const API_URLS = {
   RECRUITMENT: "/backend/recruitment",
   RECRUITMENT_ACTIVATION: "/backend/recruitment/:recruitmentId/activation",
+  RECRUITMENT_FINAL_RESULT: "/backend/recruitment/:recruitmentId/results",
+  RECRUITMENT_SEND_MAIL: "/backend/recruitment/:recruitmentId/send/mail",
   MANAGER_REGISTER: "/backend/auth/manager/register",
   MANAGER_LOGIN: "/backend/auth/manager/login",
   CREATE_CLUB: "/backend/councils",
@@ -24,10 +26,8 @@ export const API_URLS = {
     "/backend/applications/:applicationId/document/decision",
   APPLICATION_INTERVIEW_DECISION:
     "/backend/applications/:applicationId/interview/evaluation",
-  APPLICATION_EVALUATIONS:
-    "/backend/applications/:applicationId/evaluations",
-  COUNCIL_INVITATION_CODE:
-    "/backend/councils/:councilId/invitation-codes",
+  APPLICATION_EVALUATIONS: "/backend/applications/:applicationId/evaluations",
+  COUNCIL_INVITATION_CODE: "/backend/councils/:councilId/invitation-codes",
   COUNCIL_INVITATION_JOIN: "/backend/councils/invitation/:invitationCode",
   COUNCIL_PRESIDENT_DELEGATION: "/backend/councils/vice",
   COUNCIL_MEMBER_REMOVE: "/backend/councils/members/:councilManagerId",

@@ -20,7 +20,8 @@ const STATUS_META: Record<ApplicationStatusKey, StatusMeta> = {
   },
   INTERVIEW: {
     label: "면접 진행 중",
-    description: "면접 단계가 진행 중이에요. 지원서를 더 이상 수정할 수 없습니다.",
+    description:
+      "면접 단계가 진행 중이에요. 지원서를 더 이상 수정할 수 없습니다.",
     badgeClass: "bg-amber-50 text-amber-600",
   },
   FINAL: {
@@ -43,9 +44,34 @@ export const getApplicationStatusMeta = (
 };
 
 export const mapEvaluationStatusToApplicantStatus = (
-  status?: string
+  evaluationStatus?: string,
+  recruitmentStatus?: string
 ): ApplicantStatus => {
-  switch (status) {
+  if (recruitmentStatus === "DOCUMENT_SCREENING") {
+    if (evaluationStatus === "FAILED") {
+      return "fail";
+    }
+    if (evaluationStatus === "SUBMITTED") {
+      return "pending";
+    }
+  }
+
+  if (recruitmentStatus === "INTERVIEW") {
+    if (evaluationStatus === "SUBMITTED") {
+      return "pending";
+    }
+  }
+
+  if (recruitmentStatus === "FINAL") {
+    if (evaluationStatus === "PASSED") {
+      return "pass";
+    }
+    if (evaluationStatus === "FAILED") {
+      return "fail";
+    }
+  }
+
+  switch (evaluationStatus) {
     case "PASSED":
     case "INTERVIEW":
       return "pass";

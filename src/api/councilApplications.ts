@@ -6,6 +6,7 @@ export type DocumentScreeningApplicant = {
   tel: string;
   appliedAt: string;
   evaluationStatus: string;
+  recruitmentStatus: string;
 };
 
 export type DocumentScreeningResponse = {

@@ -18,6 +18,7 @@ import ApplicationListPage from "@/pages/applications/ApplicationListPage";
 import ApplicationEditPage from "@/pages/applications/ApplicationEditPage";
 import RecruitmentApplyPage from "@/pages/recruitment/RecruitmentApplyPage";
 import RecruitmentThankYouPage from "@/pages/recruitment/RecruitmentThankYouPage";
+import RecruitmentFinalResultPage from "@/pages/recruitment/RecruitmentFinalResultPage";
 
 export const router = createBrowserRouter([
   {
@@ -162,6 +163,10 @@ export const router = createBrowserRouter([
   {
     path: "/recruitment/:recruitmentId/thanks",
     element: <RecruitmentThankYouPage />,
+  },
+  {
+    path: "/recruitment/passingresult",
+    element: <RecruitmentFinalResultPage />,
   },
 ]);
 

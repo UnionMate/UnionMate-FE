@@ -1,27 +1,36 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import DetailMainCard from "@/widget/recruitdetail/components/DetailMainCard";
 import InterviewDetailCard from "@/widget/recruitdetail/components/InterviewDetailCard";
 import type {
   ApplicantDetail,
   ApplicantStatus,
 } from "@/widget/recruitdetail/types";
+import { useApplicantStageStore } from "@/shared/stores/useApplicantStageStore";
 
 interface RecruitApplicantMainProps {
   initialApplicant: ApplicantDetail | null;
   applicationId: number;
   viewMode?: "document" | "interview";
+  stageKey?: string | null;
+  onInvalidateLists?: () => void;
 }
 
 const RecruitApplicantMain = ({
   initialApplicant,
   applicationId,
   viewMode = "document",
+  stageKey,
+  onInvalidateLists,
 }: RecruitApplicantMainProps) => {
   const [applicant, setApplicant] = useState<ApplicantDetail | null>(
     initialApplicant
   );
-  const [currentView, setCurrentView] =
-    useState<"document" | "interview">(viewMode);
+  const [currentView, setCurrentView] = useState<"document" | "interview">(
+    viewMode
+  );
+
+  const stages = useApplicantStageStore((state) => state.stages);
+  const setStage = useApplicantStageStore((state) => state.setStage);
 
   useEffect(() => {
     setApplicant(initialApplicant);
@@ -31,11 +40,46 @@ const RecruitApplicantMain = ({
     setCurrentView(viewMode);
   }, [viewMode]);
 
+  const stage = useMemo(
+    () => (stageKey ? stages[stageKey] : undefined),
+    [stageKey, stages]
+  );
+
   const handleStatusChange = (
     applicantId: string,
     status: ApplicantStatus,
-    evaluationStatus?: string
+    nextEvaluationStatus?: string,
+    nextRecruitmentStatus?: string
   ) => {
+    const resolvedEvaluationStatus =
+      nextEvaluationStatus ??
+      (status === "pass"
+        ? stage?.recruitmentStatus === "FINAL"
+          ? "PASSED"
+          : "SUBMITTED"
+        : status === "fail"
+        ? "FAILED"
+        : stage?.evaluationStatus ?? "SUBMITTED");
+    const resolvedRecruitmentStatus =
+      nextRecruitmentStatus ??
+      (status === "pass"
+        ? stage?.recruitmentStatus === "FINAL"
+          ? "FINAL"
+          : "INTERVIEW"
+        : status === "fail"
+        ? stage?.recruitmentStatus === "FINAL"
+          ? "FINAL"
+          : "DOCUMENT_SCREENING"
+        : stage?.recruitmentStatus ?? "DOCUMENT_SCREENING");
+
+    if (stageKey) {
+      setStage(stageKey, {
+        status,
+        evaluationStatus: resolvedEvaluationStatus,
+        recruitmentStatus: resolvedRecruitmentStatus,
+      });
+    }
+
     setApplicant((prev) => {
       if (!prev || prev.id !== applicantId) {
         return prev;
@@ -43,9 +87,11 @@ const RecruitApplicantMain = ({
       return {
         ...prev,
         status,
-        evaluationStatus: evaluationStatus ?? prev.evaluationStatus,
+        evaluationStatus: resolvedEvaluationStatus,
       };
     });
+
+    onInvalidateLists?.();
   };
 
   const handleInterviewResultChange = (
@@ -53,6 +99,14 @@ const RecruitApplicantMain = ({
     evaluationStatus: "PASSED" | "FAILED",
     status: ApplicantStatus
   ) => {
+    if (stageKey) {
+      setStage(stageKey, {
+        status,
+        evaluationStatus,
+        recruitmentStatus: "FINAL",
+      });
+    }
+
     setApplicant((prev) => {
       if (!prev || prev.id !== applicantId) {
         return prev;
@@ -63,6 +117,8 @@ const RecruitApplicantMain = ({
         evaluationStatus,
       };
     });
+
+    onInvalidateLists?.();
   };
 
   const handleInterviewUpdate = (

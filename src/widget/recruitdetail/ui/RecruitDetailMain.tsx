@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import clsx from "clsx";
 import { useQuery } from "@tanstack/react-query";
@@ -10,11 +10,22 @@ import { getInterviewApplicants } from "@/api/councilInterviews";
 import { useMyApplications } from "@/api/myApplications";
 import { toast } from "sonner";
 import { statusBadgeMap, statusLabelMap } from "../constants/applicants";
+import type { ApplicantStatus } from "../types";
 import { mapEvaluationStatusToApplicantStatus } from "@/lib/applications/statusMeta";
+import {
+  buildApplicantStageKey,
+  useApplicantStageStore,
+} from "@/shared/stores/useApplicantStageStore";
+
+type DocumentStateSnapshot = {
+  count: number;
+  canSendInterviewMail: boolean;
+  allDecided: boolean;
+};
 
 type RecruitDetailMainProps = {
   activeTab: "서류 심사" | "면접";
-  onDocumentStateChange: (count: number, allDecided: boolean) => void;
+  onDocumentStateChange: (state: DocumentStateSnapshot) => void;
   onInterviewStateChange: (count: number) => void;
 };
 
@@ -67,6 +78,8 @@ const RecruitDetailMain = ({
 
   const { mutate: fetchApplicantApplications, isPending: isViewerLoading } =
     useMyApplications();
+  const bulkSetStages = useApplicantStageStore((state) => state.bulkSet);
+  const setStage = useApplicantStageStore((state) => state.setStage);
 
   const formatSubmittedAt = (submittedAt: string) => {
     const date = new Date(submittedAt);
@@ -95,7 +108,10 @@ const RecruitDetailMain = ({
       return;
     }
 
-    const applicantKey = `${applicant.email}-${applicant.appliedAt}`;
+    const applicantKey = buildApplicantStageKey(
+      applicant.email,
+      applicant.appliedAt
+    );
     setActiveApplicantKey(applicantKey);
 
     fetchApplicantApplications(
@@ -139,21 +155,76 @@ const RecruitDetailMain = ({
     );
   };
   const handleSelectApplicant = (applicant: DocumentScreeningApplicant) => {
-    const applicantKey = `${applicant.email}-${applicant.appliedAt}`;
+    const applicantKey = buildApplicantStageKey(
+      applicant.email,
+      applicant.appliedAt
+    );
+    setStage(applicantKey, {
+      recruitmentStatus: applicant.recruitmentStatus,
+      evaluationStatus: applicant.evaluationStatus,
+      status: resolveDocumentStatus(applicant),
+    });
     setActiveApplicantKey(applicantKey);
     navigateToApplicantDetail(applicant, "document");
   };
 
+  const resolveDocumentStatus = useCallback(
+    (applicant: DocumentScreeningApplicant): ApplicantStatus => {
+      const { recruitmentStatus, evaluationStatus } = applicant;
+      if (
+        recruitmentStatus === "INTERVIEW" &&
+        evaluationStatus === "SUBMITTED"
+      ) {
+        return "pass";
+      }
+      if (
+        recruitmentStatus === "DOCUMENT_SCREENING" &&
+        evaluationStatus === "FAILED"
+      ) {
+        return "fail";
+      }
+      if (
+        recruitmentStatus === "DOCUMENT_SCREENING" &&
+        evaluationStatus === "SUBMITTED"
+      ) {
+        return "pending";
+      }
+      return mapEvaluationStatusToApplicantStatus(
+        evaluationStatus,
+        recruitmentStatus
+      );
+    },
+    []
+  );
+
   useEffect(() => {
     const total = applicants.length;
-    const DECIDED_STATUSES = new Set(["INTERVIEW", "PASSED", "FAILED"]);
+    const statuses = applicants.map(resolveDocumentStatus);
     const allDecided =
-      total > 0 &&
-      applicants.every((applicant) =>
-        DECIDED_STATUSES.has(applicant.evaluationStatus)
-      );
-    onDocumentStateChange(total, allDecided);
-  }, [applicants, onDocumentStateChange]);
+      total > 0 && statuses.every((status) => status !== "pending");
+    const canSendInterviewMail = statuses.some(
+      (status) => status === "pass" || status === "fail"
+    );
+    onDocumentStateChange({ count: total, canSendInterviewMail, allDecided });
+  }, [applicants, onDocumentStateChange, resolveDocumentStatus]);
+
+  useEffect(() => {
+    if (applicants.length === 0) return;
+    const entries = applicants
+      .filter((applicant) => applicant.email && applicant.appliedAt)
+      .map((applicant) => ({
+        key: buildApplicantStageKey(applicant.email, applicant.appliedAt),
+        stage: {
+          recruitmentStatus: applicant.recruitmentStatus,
+          evaluationStatus: applicant.evaluationStatus,
+          status: resolveDocumentStatus(applicant),
+        },
+      }));
+    if (entries.length === 0) {
+      return;
+    }
+    bulkSetStages(entries);
+  }, [applicants, bulkSetStages, resolveDocumentStatus]);
 
   useEffect(() => {
     onInterviewStateChange(interviewApplicants.length);
@@ -202,12 +273,16 @@ const RecruitDetailMain = ({
     return (
       <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto pb-6 pr-2">
         {applicants.map((applicant) => {
-          const applicantKey = `${applicant.email}-${applicant.appliedAt}`;
+          const applicantKey = buildApplicantStageKey(
+            applicant.email,
+            applicant.appliedAt
+          );
           const isActive =
             activeApplicantKey === applicantKey && isViewerLoading;
-          const applicantStatus = mapEvaluationStatusToApplicantStatus(
-            applicant.evaluationStatus
-          );
+          const applicantStatus = resolveDocumentStatus(applicant);
+          const submittedLabel = isActive
+            ? "불러오는 중..."
+            : `제출일 ${formatSubmittedAt(applicant.appliedAt)}`;
 
           return (
             <button
@@ -217,35 +292,33 @@ const RecruitDetailMain = ({
               className="flex w-full items-center justify-between rounded-2xl border border-gray-100 bg-white px-6 py-5 text-left shadow-sm transition hover:border-primary/40 hover:bg-primary/5 disabled:opacity-60"
               disabled={isActive}
             >
-              <div className="flex flex-1 flex-col gap-1">
-                <div className="flex items-center gap-3">
-                  <p className="text-base font-semibold text-gray-900">
-                    {applicant.name}
-                  </p>
-                  <span
-                    className={clsx(
-                      "rounded-full px-3 py-1 text-xs font-semibold",
-                      statusBadgeMap[applicantStatus]
-                    )}
-                  >
-                    {statusLabelMap[applicantStatus]}
+              <div className="flex flex-1 flex-col gap-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <p className="text-base font-semibold text-gray-900">
+                      {applicant.name}
+                    </p>
+                    <span
+                      className={clsx(
+                        "rounded-full px-3 py-1 text-xs font-semibold",
+                        statusBadgeMap[applicantStatus]
+                      )}
+                    >
+                      {statusLabelMap[applicantStatus]}
+                    </span>
+                  </div>
+                  <span className="text-xs font-medium text-gray-400">
+                    {submittedLabel}
                   </span>
                 </div>
-                <p className="text-sm text-gray-500">
-                  {applicant.tel ? `연락처 ${applicant.tel}` : applicant.email}
-                </p>
-                <div className="mt-3 flex flex-wrap gap-4 text-xs text-gray-500">
-                  <span>{applicant.tel || "전화번호 없음"}</span>
-                  <span>{applicant.email}</span>
+                <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500">
+                  <span className="rounded-full bg-gray-100 px-3 py-1">
+                    ✉ {applicant.email}
+                  </span>
+                  <span className="rounded-full bg-gray-100 px-3 py-1">
+                    ☎ {applicant.tel || "전화번호 없음"}
+                  </span>
                 </div>
-              </div>
-              <div className="flex flex-col items-end gap-1 text-xs text-gray-400">
-                <span>서류 제출일</span>
-                <span className="text-sm font-semibold text-gray-700">
-                  {isActive
-                    ? "불러오는 중..."
-                    : formatSubmittedAt(applicant.appliedAt)}
-                </span>
               </div>
             </button>
           );
@@ -297,11 +370,18 @@ const RecruitDetailMain = ({
     return (
       <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto pb-6 pr-2">
         {interviewApplicants.map((applicant) => {
-          const key = `${applicant.email}-${applicant.appliedAt}`;
+          const key = buildApplicantStageKey(
+            applicant.email,
+            applicant.appliedAt
+          );
           const isActive = activeApplicantKey === key && isViewerLoading;
           const status = mapEvaluationStatusToApplicantStatus(
-            applicant.evaluationStatus
+            applicant.evaluationStatus,
+            applicant.recruitmentStatus
           );
+          const registeredLabel = isActive
+            ? "불러오는 중..."
+            : `등록일 ${formatSubmittedAt(applicant.appliedAt)}`;
           return (
             <button
               key={key}
@@ -318,39 +398,42 @@ const RecruitDetailMain = ({
                   },
                   "interview"
                 );
+                setStage(key, {
+                  evaluationStatus: applicant.evaluationStatus,
+                  recruitmentStatus: applicant.recruitmentStatus,
+                  status: status,
+                });
               }}
               className="flex w-full items-center justify-between rounded-2xl border border-gray-100 bg-white px-6 py-5 text-left shadow-sm transition hover:border-primary/40 hover:bg-primary/5 disabled:opacity-60"
               disabled={isActive}
             >
-              <div className="flex flex-1 flex-col gap-1">
-                <div className="flex items-center gap-3">
-                  <p className="text-base font-semibold text-gray-900">
-                    {applicant.name}
-                  </p>
-                  <span
-                    className={clsx(
-                      "rounded-full px-3 py-1 text-xs font-semibold",
-                      statusBadgeMap[status]
-                    )}
-                  >
-                    {statusLabelMap[status]}
+              <div className="flex flex-1 flex-col gap-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <p className="text-base font-semibold text-gray-900">
+                      {applicant.name}
+                    </p>
+                    <span
+                      className={clsx(
+                        "rounded-full px-3 py-1 text-xs font-semibold",
+                        statusBadgeMap[status]
+                      )}
+                    >
+                      {statusLabelMap[status]}
+                    </span>
+                  </div>
+                  <span className="text-xs font-medium text-gray-400">
+                    {registeredLabel}
                   </span>
                 </div>
-                <p className="text-sm text-gray-500">
-                  {applicant.tel || applicant.email}
-                </p>
-                <div className="mt-3 flex flex-wrap gap-4 text-xs text-gray-500">
-                  <span>{applicant.tel || "전화번호 없음"}</span>
-                  <span>{applicant.email}</span>
+                <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500">
+                  <span className="rounded-full bg-gray-100 px-3 py-1">
+                    ✉ {applicant.email}
+                  </span>
+                  <span className="rounded-full bg-gray-100 px-3 py-1">
+                    ☎ {applicant.tel || "전화번호 없음"}
+                  </span>
                 </div>
-              </div>
-              <div className="flex flex-col items-end gap-1 text-xs text-gray-400">
-                <span>면접 대상 등록일</span>
-                <span className="text-sm font-semibold text-gray-700">
-                  {isActive
-                    ? "불러오는 중..."
-                    : formatSubmittedAt(applicant.appliedAt)}
-                </span>
               </div>
             </button>
           );

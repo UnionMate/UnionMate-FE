@@ -262,7 +262,7 @@ export const deleteApplicationComment = async (
 };
 
 export type InterviewDecisionRequest = {
-  status: "PASSED" | "FAILED";
+  decision: "PASSED" | "FAILED";
 };
 
 export const updateInterviewDecision = async (

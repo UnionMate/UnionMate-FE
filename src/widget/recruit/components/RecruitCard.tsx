@@ -11,6 +11,22 @@ interface RecruitCardProps {
   recruit: RecruitCardData;
 }
 
+const envAppOrigin = (
+  import.meta.env.VITE_PUBLIC_URL || import.meta.env.VITE_APP_ORIGIN || ""
+).trim();
+
+const ENV_APP_ORIGIN = envAppOrigin ? envAppOrigin.replace(/\/$/, "") : "";
+
+const resolveAppOrigin = () => {
+  if (ENV_APP_ORIGIN) {
+    return ENV_APP_ORIGIN;
+  }
+  if (typeof window !== "undefined" && window.location?.origin) {
+    return window.location.origin.replace(/\/$/, "");
+  }
+  return "";
+};
+
 const RecruitCard = ({ recruit }: RecruitCardProps) => {
   const navigate = useNavigate();
   const { councilId } = useParams<{ councilId: string }>();
@@ -109,11 +125,10 @@ const RecruitCard = ({ recruit }: RecruitCardProps) => {
   const handleCopyLink = async (event: MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
     event.stopPropagation();
-    const baseUrl =
-      typeof window !== "undefined"
-        ? window.location.origin
-        : "http://localhost:5173";
-    const link = `${baseUrl}/recruitment/${id}`;
+    const appOrigin = resolveAppOrigin();
+    const link = appOrigin
+      ? `${appOrigin}/recruitment/${id}`
+      : `/recruitment/${id}`;
 
     try {
       if (navigator.clipboard && "writeText" in navigator.clipboard) {

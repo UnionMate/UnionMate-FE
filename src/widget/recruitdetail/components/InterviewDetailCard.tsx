@@ -4,6 +4,10 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import type { ApplicantDetail, ApplicantStatus } from "../types";
 import {
+  APPLICANT_STATUS_OPTIONS,
+  statusLabelMap,
+} from "../constants/applicants";
+import {
   createApplicationEvaluation,
   deleteApplicationEvaluation,
   getApplicationEvaluations,
@@ -24,6 +28,17 @@ interface InterviewDetailCardProps {
 }
 
 const MAX_EVALUATION_LENGTH = 1000;
+const DECISION_OPTIONS = APPLICANT_STATUS_OPTIONS;
+
+const deriveDecision = (evaluationStatus?: string): ApplicantStatus => {
+  if (evaluationStatus === "FAILED") {
+    return "fail";
+  }
+  if (evaluationStatus === "PASSED") {
+    return "pass";
+  }
+  return "pending";
+};
 
 const InterviewDetailCard = ({
   applicant,
@@ -33,14 +48,16 @@ const InterviewDetailCard = ({
   const queryClient = useQueryClient();
   const managerIdentity = useMemo(() => getCurrentManagerIdentity(), []);
   const [editorValue, setEditorValue] = useState("");
-  const [decision, setDecision] = useState<"pass" | "fail">(
-    applicant.evaluationStatus === "FAILED" ? "fail" : "pass"
+  const [decision, setDecision] = useState<ApplicantStatus>(
+    deriveDecision(applicant.evaluationStatus)
   );
+  const [pendingDecision, setPendingDecision] =
+    useState<ApplicantStatus | null>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editingValue, setEditingValue] = useState("");
 
   useEffect(() => {
-    setDecision(applicant.evaluationStatus === "FAILED" ? "fail" : "pass");
+    setDecision(deriveDecision(applicant.evaluationStatus));
   }, [applicant.evaluationStatus]);
 
   const { data, isLoading, isError } = useQuery({
@@ -102,18 +119,18 @@ const InterviewDetailCard = ({
   });
 
   const { mutate: saveDecision, isPending: isSavingDecision } = useMutation({
-    mutationFn: (status: "PASSED" | "FAILED") =>
-      updateInterviewDecision(applicationId, { status }),
-    onSuccess: (_, status) => {
-      toast.success("면접 평가 결과가 저장되었습니다.");
+    mutationFn: (nextDecision: "PASSED" | "FAILED") =>
+      updateInterviewDecision(applicationId, { decision: nextDecision }),
+    onSuccess: (_, nextDecision) => {
+      toast.success("최종 평가 결과가 저장되었습니다.");
       onResultChange(
         applicant.id,
-        status,
-        status === "PASSED" ? "pass" : "fail"
+        nextDecision,
+        nextDecision === "PASSED" ? "pass" : "fail"
       );
     },
     onError: () => {
-      toast.error("면접 평가 결과를 저장하지 못했습니다.");
+      toast.error("최종 평가 결과를 저장하지 못했습니다.");
     },
   });
 
@@ -130,7 +147,27 @@ const InterviewDetailCard = ({
     editEvaluation({ evaluationId: editingId, evaluation: trimmed });
   };
 
-  const decisionStatus = decision === "pass" ? "PASSED" : "FAILED";
+  const isDecisionModalOpen = pendingDecision !== null;
+  const canModifyDecision = applicant.evaluationStatus === "SUBMITTED";
+
+  const handleDecisionButtonClick = (value: ApplicantStatus) => {
+    if (value === "pending" || !canModifyDecision) {
+      return;
+    }
+    setPendingDecision(value);
+  };
+
+  const handleDecisionModalClose = () => {
+    setPendingDecision(null);
+  };
+
+  const handleDecisionModalConfirm = () => {
+    if (!pendingDecision || pendingDecision === "pending") return;
+    const nextDecision = pendingDecision === "pass" ? "PASSED" : "FAILED";
+    setDecision(pendingDecision);
+    setPendingDecision(null);
+    saveDecision(nextDecision);
+  };
 
   return (
     <div className="flex flex-1 flex-col gap-6 xl:flex-row xl:items-start">
@@ -196,10 +233,7 @@ const InterviewDetailCard = ({
                 <InterviewEvaluationCard
                   key={evaluation.evaluationId}
                   evaluation={evaluation}
-                  canEdit={
-                    managerIdentity?.id !== null &&
-                    managerIdentity.id === evaluation.councilManagerId
-                  }
+                  canEdit={isEvaluationMine(managerIdentity, evaluation)}
                   isEditing={editingId === evaluation.evaluationId}
                   editingValue={editingValue}
                   onEditStart={() => {
@@ -224,37 +258,77 @@ const InterviewDetailCard = ({
 
       <aside className="flex w-full min-w-[320px] max-w-full flex-col gap-4 xl:w-[320px] xl:flex-shrink-0">
         <section className="rounded-3xl border border-gray-100 bg-white p-5 shadow">
-          <h3 className="text-sm font-semibold text-gray-900">면접 평가 결과</h3>
+          <h3 className="text-sm font-semibold text-gray-900">
+            최종 평가 결과
+          </h3>
           <p className="mt-1 text-xs text-gray-500">
-            합격을 선택하면 면접 합격(PASSED), 불합격은 FAILED로 저장됩니다.
+            면접 평가는 평가 대기 → 합격 또는 불합격 순서로 진행돼요. 버튼을
+            선택하면 즉시 확정되며 되돌릴 수 없습니다.
           </p>
           <div className="mt-4 grid gap-2">
-            {(["pass", "fail"] as const).map((value) => (
-              <button
-                key={value}
-                type="button"
-                onClick={() => setDecision(value)}
-                className={clsx(
-                  "w-full rounded-2xl px-4 py-2 text-sm font-semibold transition",
-                  decision === value
-                    ? "bg-primary text-white shadow"
-                    : "border border-gray-200 bg-gray-50 text-gray-600 hover:border-primary/40 hover:text-primary"
-                )}
-              >
-                {value === "pass" ? "합격" : "불합격"}
-              </button>
-            ))}
+            {DECISION_OPTIONS.map((value) => {
+              const isSelected = decision === value;
+              const isInteractive = value !== "pending" && canModifyDecision;
+              return (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => handleDecisionButtonClick(value)}
+                  disabled={!isInteractive || isSavingDecision}
+                  className={clsx(
+                    "w-full rounded-2xl px-4 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60",
+                    isSelected
+                      ? "bg-primary text-white shadow"
+                      : "border border-gray-200 bg-gray-50 text-gray-600 hover:border-primary/40 hover:text-primary"
+                  )}
+                >
+                  {statusLabelMap[value]}
+                </button>
+              );
+            })}
           </div>
-          <button
-            type="button"
-            onClick={() => saveDecision(decisionStatus)}
-            disabled={isSavingDecision}
-            className="mt-4 w-full rounded-2xl bg-primary px-4 py-3 text-sm font-semibold text-white transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {isSavingDecision ? "저장 중..." : "저장하기"}
-          </button>
         </section>
       </aside>
+      {isDecisionModalOpen && pendingDecision && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+          onClick={handleDecisionModalClose}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            className="w-full max-w-[360px] rounded-2xl bg-white p-6 shadow-xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="flex flex-col gap-2">
+              <p className="text-lg font-semibold text-gray-900">
+                {statusLabelMap[pendingDecision]}으로 선택하시겠어요?
+              </p>
+              <p className="text-sm text-gray-600">
+                확인을 누르면 즉시 결과가 저장되며 되돌릴 수 없습니다.
+              </p>
+            </div>
+            <div className="mt-6 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={handleDecisionModalClose}
+                disabled={isSavingDecision}
+                className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-600 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                취소
+              </button>
+              <button
+                type="button"
+                onClick={handleDecisionModalConfirm}
+                disabled={isSavingDecision}
+                className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                확인
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -289,7 +363,9 @@ const InterviewInfoCard = ({ applicant }: { applicant: ApplicantDetail }) => {
           <p className="mt-1 text-sm font-semibold text-gray-900">
             {applicant.interview.date} {applicant.interview.time}
           </p>
-          <p className="text-xs text-gray-500">{applicant.interview.location}</p>
+          <p className="text-xs text-gray-500">
+            {applicant.interview.location}
+          </p>
         </div>
       </div>
     </section>
@@ -404,7 +480,22 @@ const formatDateTime = (iso: string) => {
 
 type ManagerIdentity = {
   id: number | null;
+  name: string | null;
 };
+
+const getStoredManagerName = (): string | null => {
+  if (typeof window === "undefined") {
+    return null;
+  }
+  const candidates = [
+    localStorage.getItem("username"),
+    localStorage.getItem("managerName"),
+  ].filter((value): value is string => typeof value === "string");
+  return candidates.find((value) => value.trim().length > 0) ?? null;
+};
+
+const normalizeName = (value: string | null | undefined) =>
+  typeof value === "string" ? value.trim().toLowerCase() : null;
 
 const getCurrentManagerIdentity = (): ManagerIdentity => {
   try {
@@ -413,11 +504,11 @@ const getCurrentManagerIdentity = (): ManagerIdentity => {
         ? localStorage.getItem("accessToken") || localStorage.getItem("token")
         : null;
     if (!token) {
-      return { id: null };
+      return { id: null, name: null };
     }
     const decoded = decodeJWT(token);
     if (!decoded) {
-      return { id: null };
+      return { id: null, name: null };
     }
     const rawId =
       (decoded.managerId as number | string | undefined) ??
@@ -427,14 +518,39 @@ const getCurrentManagerIdentity = (): ManagerIdentity => {
       typeof rawId === "number"
         ? rawId
         : typeof rawId === "string"
-          ? Number(rawId)
-          : NaN;
+        ? Number(rawId)
+        : NaN;
     const id = Number.isFinite(numericId) ? numericId : null;
-    return { id };
+    const nameCandidates = [
+      decoded.username,
+      decoded.name,
+      decoded.managerName,
+      decoded.councilManagerName,
+      getStoredManagerName(),
+    ].filter((value): value is string => typeof value === "string");
+    const name =
+      nameCandidates.find((value) => value.trim().length > 0) ?? null;
+    return { id, name };
   } catch (error) {
     console.error("Failed to resolve manager identity", error);
-    return { id: null };
+    return { id: null, name: null };
   }
+};
+
+const isEvaluationMine = (
+  identity: ManagerIdentity,
+  evaluation: ApplicationEvaluation
+) => {
+  if (identity.id !== null && identity.id === evaluation.councilManagerId) {
+    return true;
+  }
+  const normalizedIdentityName = normalizeName(identity.name);
+  const normalizedEvaluationName = normalizeName(evaluation.councilManagerName);
+  return Boolean(
+    normalizedIdentityName &&
+      normalizedEvaluationName &&
+      normalizedIdentityName === normalizedEvaluationName
+  );
 };
 
 export default InterviewDetailCard;

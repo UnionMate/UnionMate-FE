@@ -198,3 +198,73 @@ export const submitApplication = async (
 
   return data as SubmitApplicationResponse;
 };
+
+export type RecruitmentFinalResultRequest = {
+  applicantName: string;
+  email: string;
+};
+
+export type RecruitmentFinalResultResponse = {
+  code: number;
+  message: string;
+  data: {
+    applicant: {
+      name: string;
+      email: string;
+      tel: string;
+    };
+    councilName: string;
+    councilManagerEmail: string;
+    recruitment: {
+      recruitmentId: number;
+      recruitmentName: string;
+    };
+    interview: {
+      time: string;
+      place: string;
+    };
+    stage: {
+      recruitmentStatus: string;
+      evaluationStatus: string;
+    };
+  };
+};
+
+export const getRecruitmentFinalResult = async (
+  recruitmentId: number,
+  payload: RecruitmentFinalResultRequest
+): Promise<RecruitmentFinalResultResponse> => {
+  const { data } = await apiClient.post(
+    API_URLS.RECRUITMENT_FINAL_RESULT.replace(
+      ":recruitmentId",
+      String(recruitmentId)
+    ),
+    payload
+  );
+
+  return data as RecruitmentFinalResultResponse;
+};
+
+export type SendRecruitmentMailRequest = {
+  type: "interview" | "final";
+};
+
+export type SendRecruitmentMailResponse = {
+  code: number;
+  message: string;
+};
+
+export const sendRecruitmentMail = async (
+  recruitmentId: number,
+  payload: SendRecruitmentMailRequest
+): Promise<SendRecruitmentMailResponse> => {
+  const { data } = await apiClient.post(
+    API_URLS.RECRUITMENT_SEND_MAIL.replace(
+      ":recruitmentId",
+      String(recruitmentId)
+    ),
+    payload
+  );
+
+  return data as SendRecruitmentMailResponse;
+};
