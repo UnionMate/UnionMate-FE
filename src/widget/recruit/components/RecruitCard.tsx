@@ -11,16 +11,7 @@ interface RecruitCardProps {
   recruit: RecruitCardData;
 }
 
-const envAppOrigin = (
-  import.meta.env.VITE_PUBLIC_URL || import.meta.env.VITE_APP_ORIGIN || ""
-).trim();
-
-const ENV_APP_ORIGIN = envAppOrigin ? envAppOrigin.replace(/\/$/, "") : "";
-
 const resolveAppOrigin = () => {
-  if (ENV_APP_ORIGIN) {
-    return ENV_APP_ORIGIN;
-  }
   if (typeof window !== "undefined" && window.location?.origin) {
     return window.location.origin.replace(/\/$/, "");
   }
