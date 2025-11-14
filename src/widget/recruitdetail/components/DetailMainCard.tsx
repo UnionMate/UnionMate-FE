@@ -168,7 +168,7 @@ const DetailMainCard = ({
         if (!isApplicationIdValid) {
           throw new Error("유효하지 않은 지원서입니다.");
         }
-        const payloadDecision = decision === "pass" ? "INTERVIEW" : "FAILED";
+        const payloadDecision = decision === "pass" ? "PASSED" : "FAILED";
         return updateDocumentDecision(resolvedApplicationId, {
           decision: payloadDecision,
         });

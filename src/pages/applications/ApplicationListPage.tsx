@@ -9,6 +9,7 @@ import {
 } from "@/api/myApplications";
 import { toast } from "sonner";
 import { getApplicationStatusMeta } from "@/lib/applications/statusMeta";
+import { useApplicantInfoStore } from "@/shared/stores/useApplicantInfoStore";
 
 type ApplicantInfo = {
   name: string;
@@ -17,10 +18,17 @@ type ApplicantInfo = {
 
 const ApplicationListPage = () => {
   const navigate = useNavigate();
-  const [applicant, setApplicant] = useState<ApplicantInfo | null>(null);
+  const { name: storedName, email: storedEmail, setApplicantInfo } =
+    useApplicantInfoStore();
+  const [applicant, setApplicant] = useState<ApplicantInfo | null>(() => {
+    if (storedName && storedEmail) {
+      return { name: storedName, email: storedEmail };
+    }
+    return null;
+  });
   const [formValues, setFormValues] = useState<ApplicantInfo>({
-    name: "",
-    email: "",
+    name: storedName,
+    email: storedEmail,
   });
   const [applications, setApplications] = useState<MyApplication[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(true);
@@ -61,6 +69,7 @@ const ApplicationListPage = () => {
             return;
           }
 
+          setApplicantInfo({ name: trimmedName, email: trimmedEmail });
           setApplicant({ name: trimmedName, email: trimmedEmail });
           setApplications(results);
           setIsModalOpen(false);
@@ -75,8 +84,14 @@ const ApplicationListPage = () => {
   };
 
   const handleEditClick = (application: MyApplication) => {
+    const applicantName = applicant?.name ?? storedName;
+    const applicantEmail = applicant?.email ?? storedEmail;
     navigate(`/applications/update/${application.applicationId}`, {
-      state: { recruitmentId: application.recruitmentId },
+      state: {
+        recruitmentId: application.recruitmentId,
+        applicantName,
+        applicantEmail,
+      },
     });
   };
 

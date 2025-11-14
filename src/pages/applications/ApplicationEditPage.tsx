@@ -16,6 +16,7 @@ import { FIXED_FIELDS } from "@/widget/formEdit/constants";
 import ApplicationQuestionCard from "@/widget/recruitmentApply/ui/ApplicationQuestionCard";
 import { Toaster } from "@/components/ui/sonner";
 import { toast } from "sonner";
+import { useApplicantInfoStore } from "@/shared/stores/useApplicantInfoStore";
 
 type AnswerValue = string | string[];
 type AnswerState = Record<number, AnswerValue>;
@@ -30,10 +31,41 @@ const ApplicationEditPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const locationState = location.state as
-    | { recruitmentId?: number }
+    | {
+        recruitmentId?: number;
+        applicantName?: string;
+        applicantEmail?: string;
+      }
     | undefined;
+  const {
+    name: storeApplicantName,
+    email: storeApplicantEmail,
+    setApplicantInfo,
+  } = useApplicantInfoStore();
+  const applicantIdentity = useMemo(
+    () => ({
+      name:
+        (storeApplicantName ||
+          locationState?.applicantName ||
+          ""
+        ).trim(),
+      email:
+        (storeApplicantEmail ||
+          locationState?.applicantEmail ||
+          ""
+        ).trim(),
+    }),
+    [
+      storeApplicantName,
+      storeApplicantEmail,
+      locationState?.applicantName,
+      locationState?.applicantEmail,
+    ]
+  );
   const parsedId = applicationId ? Number(applicationId) : NaN;
   const hasValidId = Number.isFinite(parsedId);
+  const hasApplicantIdentity =
+    applicantIdentity.name.length > 0 && applicantIdentity.email.length > 0;
   const [answers, setAnswers] = useState<AnswerState>({});
   const [fixedAnswers, setFixedAnswers] = useState<Record<number, string>>({});
   const [defaultFixedAnswers, setDefaultFixedAnswers] = useState<
@@ -45,10 +77,38 @@ const ApplicationEditPage = () => {
     }, {})
   );
 
+  useEffect(() => {
+    if (
+      (!storeApplicantName || !storeApplicantEmail) &&
+      locationState?.applicantName &&
+      locationState?.applicantEmail
+    ) {
+      setApplicantInfo({
+        name: locationState.applicantName,
+        email: locationState.applicantEmail,
+      });
+    }
+  }, [
+    locationState?.applicantEmail,
+    locationState?.applicantName,
+    setApplicantInfo,
+    storeApplicantEmail,
+    storeApplicantName,
+  ]);
+
   const { data, isLoading, isError } = useQuery({
-    queryKey: ["application-detail", parsedId],
-    queryFn: () => getApplicationDetail(parsedId),
-    enabled: hasValidId,
+    queryKey: [
+      "application-detail",
+      parsedId,
+      applicantIdentity.name,
+      applicantIdentity.email,
+    ],
+    queryFn: () =>
+      getApplicationDetail(parsedId, {
+        name: applicantIdentity.name,
+        email: applicantIdentity.email,
+      }),
+    enabled: hasValidId && hasApplicantIdentity,
   });
 
   const detail = data?.data;
@@ -381,10 +441,12 @@ const ApplicationEditPage = () => {
     mutationFn: ({
       applicationId: targetApplicationId,
       request,
+      identity,
     }: {
       applicationId: number;
       request: SubmitApplicationRequest;
-    }) => updateApplication(targetApplicationId, request),
+      identity: { name: string; email: string };
+    }) => updateApplication(targetApplicationId, request, identity),
   });
 
   const buildSelectedOptionIds = (
@@ -526,6 +588,7 @@ const ApplicationEditPage = () => {
           tel: applicantInfo.tel,
           answers: payloadAnswers,
         },
+        identity: applicantIdentity,
       });
 
       toast.success("지원서가 수정되었습니다.");
@@ -552,6 +615,29 @@ const ApplicationEditPage = () => {
         <p className="text-16-semibold text-error">
           올바르지 않은 지원서 경로입니다.
         </p>
+      </div>
+    );
+  }
+
+  if (!hasApplicantIdentity) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-black-5 px-4 py-10">
+        <div className="max-w-lg space-y-4 text-center">
+          <p className="text-title-24-bold text-black-100">
+            지원자 정보를 확인할 수 없습니다.
+          </p>
+          <p className="text-15-medium text-black-60">
+            지원서 조회를 위해 이름과 이메일이 필요합니다. 지원서 조회 페이지에서
+            다시 로그인해 주세요.
+          </p>
+          <button
+            type="button"
+            onClick={() => navigate("/applications")}
+            className="rounded-2xl bg-primary px-6 py-3 text-16-semibold text-white transition hover:bg-primary/90"
+          >
+            지원서 조회로 이동
+          </button>
+        </div>
       </div>
     );
   }

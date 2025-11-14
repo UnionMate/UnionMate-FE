@@ -35,11 +35,28 @@ export type ApplicationDetailResponse = {
   data: ApplicationDetailData;
 };
 
+export type ApplicantIdentityParams = {
+  name: string;
+  email: string;
+};
+
 export const getApplicationDetail = async (
-  applicationId: number
+  applicationId: number,
+  identity?: ApplicantIdentityParams
 ): Promise<ApplicationDetailResponse> => {
+  const params =
+    identity?.name?.trim() && identity?.email?.trim()
+      ? {
+          name: identity.name.trim(),
+          email: identity.email.trim(),
+        }
+      : undefined;
+
   const { data } = await apiClient.get(
-    API_URLS.APPLICATION_DETAIL.replace(":applicationId", String(applicationId))
+    API_URLS.APPLICATION_DETAIL.replace(":applicationId", String(applicationId)),
+    {
+      params,
+    }
   );
 
   return data as ApplicationDetailResponse;
@@ -57,14 +74,24 @@ export type UpdateApplicationResponse = {
 
 export const updateApplication = async (
   applicationId: number,
-  payload: UpdateApplicationRequest
+  payload: UpdateApplicationRequest,
+  identity?: ApplicantIdentityParams
 ): Promise<UpdateApplicationResponse> => {
+  const params =
+    identity?.name?.trim() && identity?.email?.trim()
+      ? {
+          name: identity.name.trim(),
+          email: identity.email.trim(),
+        }
+      : undefined;
+
   const { data } = await apiClient.patch(
     API_URLS.APPLICATION_DETAIL.replace(
       ":applicationId",
       String(applicationId)
     ),
-    payload
+    payload,
+    { params }
   );
 
   return data as UpdateApplicationResponse;
@@ -156,7 +183,7 @@ export const updateInterviewSchedule = async (
 };
 
 export type UpdateDocumentDecisionRequest = {
-  decision: "INTERVIEW" | "FAILED";
+  decision: "PASSED" | "FAILED";
 };
 
 export const updateDocumentDecision = async (
