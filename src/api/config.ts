@@ -1,25 +1,8 @@
 import axios from "axios";
 
-const PROD_BACKEND_ORIGIN = "https://129.154.54.225.nip.io";
-
-const resolveServerUri = () => {
-  if (import.meta.env.VITE_SERVER_URI) {
-    return import.meta.env.VITE_SERVER_URI;
-  }
-
-  if (typeof window === "undefined") {
-    return PROD_BACKEND_ORIGIN;
-  }
-
-  const { origin, hostname } = window.location;
-  if (hostname.endsWith("vercel.app")) {
-    return PROD_BACKEND_ORIGIN;
-  }
-
-  return origin;
-};
-
-const rawServerUri = resolveServerUri();
+// VITE_SERVER_URI가 설정되어 있으면 사용하고, 없으면 빈 문자열(상대 경로) 사용
+// Vercel rewrites를 통해 /backend 경로가 프록시되므로 상대 경로 사용
+const rawServerUri = import.meta.env.VITE_SERVER_URI || "";
 
 export const SERVER_URI = rawServerUri ? rawServerUri.replace(/\/$/, "") : "";
 
