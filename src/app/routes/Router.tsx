@@ -165,7 +165,7 @@ export const router = createBrowserRouter([
     element: <RecruitmentThankYouPage />,
   },
   {
-    path: "/recruitment/passingresult",
+    path: "/passingresult",
     element: <RecruitmentFinalResultPage />,
   },
 ]);
