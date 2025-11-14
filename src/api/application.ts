@@ -4,6 +4,14 @@ import type {
   SubmitApplicationRequest,
 } from "./recruitment";
 
+type ApplicationSelectOption = {
+  optionId?: number;
+  title?: string;
+  selected?: boolean;
+  isSelected?: boolean;
+  checked?: boolean;
+};
+
 export type ApplicationAnswerDetail = {
   recruitmentItemId?: number;
   itemType: RecruitmentItemType;
@@ -13,6 +21,7 @@ export type ApplicationAnswerDetail = {
   multiple?: boolean;
   selectedOptionIds?: number[];
   selectedOptionTitles?: string[];
+  selectOptions?: ApplicationSelectOption[];
   text?: string;
   answer?: string;
   value?: string;
@@ -101,10 +110,12 @@ export type ApplicationAdminAnswer = {
   itemType: string;
   title: string;
   order: number;
+  recruitmentItemId?: number;
   description?: string;
   multiple?: boolean;
   selectedOptionIds?: number[];
   selectedOptionTitles?: string[];
+  selectOptions?: ApplicationSelectOption[];
   maxLength?: number;
   date?: string;
   answer?: string;

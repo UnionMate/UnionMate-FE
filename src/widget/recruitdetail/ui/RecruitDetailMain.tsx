@@ -44,14 +44,13 @@ const RecruitDetailMain = ({
 }: RecruitDetailMainProps) => {
   const navigate = useNavigate();
   const { councilId, id } = useParams<{ councilId: string; id: string }>();
-  const parsedCouncilId = councilId ? Number(councilId) : NaN;
-  const hasValidCouncilId = Number.isFinite(parsedCouncilId);
   const parsedRecruitmentId = id ? Number(id) : NaN;
+  const hasValidRecruitmentId = Number.isFinite(parsedRecruitmentId);
 
   const { data, isLoading, isError, refetch } = useQuery({
-    queryKey: ["document-screening", parsedCouncilId],
-    queryFn: () => getDocumentScreeningApplications(parsedCouncilId),
-    enabled: hasValidCouncilId,
+    queryKey: ["document-screening", parsedRecruitmentId],
+    queryFn: () => getDocumentScreeningApplications(parsedRecruitmentId),
+    enabled: hasValidRecruitmentId,
     staleTime: 1000 * 60,
   });
 
@@ -62,9 +61,9 @@ const RecruitDetailMain = ({
     isError: isInterviewError,
     refetch: refetchInterview,
   } = useQuery({
-    queryKey: ["interview-applicants", parsedCouncilId],
-    queryFn: () => getInterviewApplicants(parsedCouncilId),
-    enabled: hasValidCouncilId,
+    queryKey: ["interview-applicants", parsedRecruitmentId],
+    queryFn: () => getInterviewApplicants(parsedRecruitmentId),
+    enabled: hasValidRecruitmentId,
     staleTime: 1000 * 60,
   });
   const interviewApplicants = useMemo(
@@ -231,10 +230,10 @@ const RecruitDetailMain = ({
   }, [interviewApplicants, onInterviewStateChange]);
 
   const renderDocumentContent = () => {
-    if (!hasValidCouncilId) {
+    if (!hasValidRecruitmentId) {
       return (
         <div className="flex flex-1 items-center justify-center rounded-2xl border border-dashed border-gray-200 bg-white text-sm text-gray-500">
-          유효한 학생회 정보를 확인할 수 없습니다.
+          유효한 모집 정보를 확인할 수 없습니다.
         </div>
       );
     }
@@ -328,10 +327,10 @@ const RecruitDetailMain = ({
   };
 
   const renderInterviewContent = () => {
-    if (!hasValidCouncilId) {
+    if (!hasValidRecruitmentId) {
       return (
         <div className="flex flex-1 items-center justify-center rounded-2xl border border-dashed border-gray-200 bg-white text-sm text-gray-500">
-          유효한 학생회 정보를 확인할 수 없습니다.
+          유효한 모집 정보를 확인할 수 없습니다.
         </div>
       );
     }

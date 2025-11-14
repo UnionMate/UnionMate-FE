@@ -5,6 +5,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import RecruitApplicantMain from "@/widget/recruitApplicant/ui/RecruitApplicantMain";
 import { getApplicationAdminDetail } from "@/api/application";
 import { mapAdminApplicationDetailToApplicant } from "@/lib/applications/mapAdminApplicationDetail";
+import { getRecruitmentDetail } from "@/api/recruitment";
 import {
   buildApplicantStageKey,
   useApplicantStageStore,
@@ -25,9 +26,10 @@ interface ApplicantLocationState {
 }
 
 const RecruitApplicantPage = () => {
-  const { councilId, applicantId } = useParams<{
+  const { applicantId, id } = useParams<{
     councilId: string;
     applicantId: string;
+    id?: string;
   }>();
   const navigate = useNavigate();
   const location = useLocation();
@@ -36,7 +38,7 @@ const RecruitApplicantPage = () => {
     .filter(Boolean)
     .includes("interview");
 
-  const parsedCouncilId = councilId ? Number(councilId) : NaN;
+  const parsedRecruitmentId = id ? Number(id) : NaN;
   const parsedApplicationId = applicantId ? Number(applicantId) : NaN;
   const hasValidApplicationId = Number.isFinite(parsedApplicationId);
 
@@ -49,17 +51,37 @@ const RecruitApplicantPage = () => {
     enabled: hasValidApplicationId,
   });
 
+  const recruitmentIdFromDetail =
+    typeof data?.data?.recruitment?.recruitmentId === "number"
+      ? data.data.recruitment.recruitmentId
+      : undefined;
+  const resolvedRecruitmentId =
+    recruitmentIdFromDetail ?? parsedRecruitmentId ?? NaN;
+  const hasValidRecruitmentId = Number.isFinite(resolvedRecruitmentId);
+
+  const { data: recruitmentDetail } = useQuery({
+    queryKey: ["recruitment-detail", resolvedRecruitmentId],
+    queryFn: () => getRecruitmentDetail(resolvedRecruitmentId),
+    enabled: hasValidRecruitmentId,
+    staleTime: 1000 * 60,
+  });
+
   const getStage = useApplicantStageStore((state) => state.getStage);
 
   const applicant = useMemo<ApplicantDetail | null>(() => {
+    if (data?.data) {
+      return mapAdminApplicationDetailToApplicant(
+        data.data,
+        recruitmentDetail?.data
+      );
+    }
+
     if (state?.applicant && state.applicant.id === applicantId) {
       return state.applicant;
     }
-    if (!data?.data) {
-      return null;
-    }
-    return mapAdminApplicationDetailToApplicant(data.data);
-  }, [applicantId, data?.data, state]);
+
+    return null;
+  }, [applicantId, data?.data, recruitmentDetail?.data, state]);
   const stageKey = useMemo(() => {
     const email = state?.applicantInfo?.email;
     const appliedAt = state?.applicantInfo?.appliedAt;
@@ -112,16 +134,16 @@ const RecruitApplicantPage = () => {
   }, [applicantWithStage, viewMode]);
 
   const invalidateLists = useCallback(() => {
-    if (!Number.isFinite(parsedCouncilId)) {
+    if (!Number.isFinite(parsedRecruitmentId)) {
       return;
     }
     queryClient.invalidateQueries({
-      queryKey: ["document-screening", parsedCouncilId],
+      queryKey: ["document-screening", parsedRecruitmentId],
     });
     queryClient.invalidateQueries({
-      queryKey: ["interview-applicants", parsedCouncilId],
+      queryKey: ["interview-applicants", parsedRecruitmentId],
     });
-  }, [parsedCouncilId, queryClient]);
+  }, [parsedRecruitmentId, queryClient]);
 
   const handleGoBack = () => {
     navigate(-1);

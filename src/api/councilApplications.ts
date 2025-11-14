@@ -16,11 +16,11 @@ export type DocumentScreeningResponse = {
 };
 
 export const getDocumentScreeningApplications = async (
-  councilId: number
+  recruitmentId: number
 ): Promise<DocumentScreeningResponse> => {
-  const endpoint = API_URLS.COUNCIL_DOCUMENT_SCREENING.replace(
-    ":councilId",
-    String(councilId)
+  const endpoint = API_URLS.RECRUITMENT_DOCUMENT_SCREENING.replace(
+    ":recruitmentId",
+    String(recruitmentId)
   );
 
   const { data } = await apiClient.get(endpoint);

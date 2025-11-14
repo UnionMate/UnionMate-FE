@@ -4,7 +4,7 @@ import {
 } from "@/api/recruitment";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
-import { useParams, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 
 type StageMeta = {
   badge: string;
@@ -110,16 +110,17 @@ const toneClassName: Record<StageMeta["tone"], string> = {
 };
 
 const RecruitmentFinalResultPage = () => {
-  const { recruitmentId } = useParams<{ recruitmentId: string }>();
   const [searchParams] = useSearchParams();
   const decodeParam = (value: string | null) =>
     value ? decodeURIComponent(value).trim() : "";
   const applicantNameParam = decodeParam(searchParams.get("name"));
   const emailParam = decodeParam(searchParams.get("email"));
-  const parsedId = recruitmentId ? Number(recruitmentId) : NaN;
+  const recruitmentIdParam = decodeParam(searchParams.get("recruitmentId"));
+  const parsedId = recruitmentIdParam ? Number(recruitmentIdParam) : NaN;
   const hasApplicantName = applicantNameParam.length > 0;
   const hasEmail = emailParam.length > 0;
-  const canRequest = Number.isFinite(parsedId) && hasApplicantName && hasEmail;
+  const canRequest =
+    Number.isFinite(parsedId) && hasApplicantName && hasEmail;
 
   const { data, isError, isLoading } = useQuery<RecruitmentFinalResultResponse>(
     {
@@ -158,7 +159,7 @@ const RecruitmentFinalResultPage = () => {
       return {
         title: "필수 정보가 누락되었습니다.",
         description:
-          "올바른 결과 안내 페이지를 이용하려면 링크에 포함된 이름과 이메일이 필요합니다.",
+          "올바른 결과 안내 페이지를 이용하려면 링크에 이름, 이메일, 모집 ID가 포함되어야 합니다.",
       };
     }
     if (isLoading) {

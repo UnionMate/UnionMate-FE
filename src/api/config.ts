@@ -31,11 +31,11 @@ export const API_URLS = {
   COUNCIL_INVITATION_JOIN: "/backend/councils/invitation/:invitationCode",
   COUNCIL_PRESIDENT_DELEGATION: "/backend/councils/vice",
   COUNCIL_MEMBER_REMOVE: "/backend/councils/members/:councilManagerId",
-  COUNCIL_INTERVIEW_APPLICATIONS:
-    "/backend/councils/:councilId/applications/interview",
+  RECRUITMENT_INTERVIEW_APPLICATIONS:
+    "/backend/councils/:recruitmentId/applications/interview",
   MY_APPLICATIONS: "/backend/applications/mine",
-  COUNCIL_DOCUMENT_SCREENING:
-    "/backend/councils/:councilId/applications/document-screening",
+  RECRUITMENT_DOCUMENT_SCREENING:
+    "/backend/councils/:recruitmentId/applications/document-screening",
 } as const;
 
 export const getApiUrl = (endpoint: string): string => {

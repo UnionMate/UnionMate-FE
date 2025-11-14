@@ -16,11 +16,11 @@ export type GetInterviewApplicantsResponse = {
 };
 
 export const getInterviewApplicants = async (
-  councilId: number
+  recruitmentId: number
 ): Promise<GetInterviewApplicantsResponse> => {
-  const endpoint = API_URLS.COUNCIL_INTERVIEW_APPLICATIONS.replace(
-    ":councilId",
-    String(councilId)
+  const endpoint = API_URLS.RECRUITMENT_INTERVIEW_APPLICATIONS.replace(
+    ":recruitmentId",
+    String(recruitmentId)
   );
   const { data } = await apiClient.get(endpoint);
   return data as GetInterviewApplicantsResponse;
