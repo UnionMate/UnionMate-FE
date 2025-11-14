@@ -63,7 +63,7 @@ const getStageMeta = (
       showInterview: true,
     };
   }
-  if (status === "INTERVIEW" && evaluationStatus === "FAILED") {
+  if (status === "DOCUMENT_SCREENING" && evaluationStatus === "FAILED") {
     return {
       badge: "서류 평가 결과",
       title: "아쉽게도 서류 평가에 통과하지 못했습니다.",
@@ -119,8 +119,7 @@ const RecruitmentFinalResultPage = () => {
   const parsedId = recruitmentIdParam ? Number(recruitmentIdParam) : NaN;
   const hasApplicantName = applicantNameParam.length > 0;
   const hasEmail = emailParam.length > 0;
-  const canRequest =
-    Number.isFinite(parsedId) && hasApplicantName && hasEmail;
+  const canRequest = Number.isFinite(parsedId) && hasApplicantName && hasEmail;
 
   const { data, isError, isLoading } = useQuery<RecruitmentFinalResultResponse>(
     {
