@@ -1,8 +1,25 @@
 import axios from "axios";
 
-const rawServerUri =
-  import.meta.env.VITE_SERVER_URI ||
-  (typeof window !== "undefined" ? window.location.origin : "");
+const PROD_BACKEND_ORIGIN = "https://129.154.54.225.nip.io";
+
+const resolveServerUri = () => {
+  if (import.meta.env.VITE_SERVER_URI) {
+    return import.meta.env.VITE_SERVER_URI;
+  }
+
+  if (typeof window === "undefined") {
+    return PROD_BACKEND_ORIGIN;
+  }
+
+  const { origin, hostname } = window.location;
+  if (hostname.endsWith("vercel.app")) {
+    return PROD_BACKEND_ORIGIN;
+  }
+
+  return origin;
+};
+
+const rawServerUri = resolveServerUri();
 
 export const SERVER_URI = rawServerUri ? rawServerUri.replace(/\/$/, "") : "";
 
