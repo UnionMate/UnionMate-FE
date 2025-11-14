@@ -3,7 +3,10 @@
     {
       "source": "/backend/:path*",
       "destination": "/api/backend/:path*"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/"
     }
   ]
 }
-
