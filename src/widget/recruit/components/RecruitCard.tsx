@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import type { KeyboardEvent, MouseEvent, SyntheticEvent } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { createPortal } from "react-dom";
 import { activateRecruitment, deleteRecruitment } from "@/api/recruitment";
 import type { RecruitCardData } from "../constants/recruitCardList";
 
@@ -56,6 +57,9 @@ const RecruitCard = ({ recruit }: RecruitCardProps) => {
   });
 
   const handleNavigate = () => {
+    if (!isPosted) {
+      return;
+    }
     if (councilId) {
       navigate(`/${councilId}/recruit/detail/${id}`);
     }
@@ -167,10 +171,16 @@ const RecruitCard = ({ recruit }: RecruitCardProps) => {
   return (
     <div
       role="button"
-      tabIndex={0}
+      tabIndex={isPosted ? 0 : -1}
       onClick={handleNavigate}
       onKeyDown={handleKeyDown}
-      className="flex flex-col w-full h-full rounded-lg py-4 px-4 bg-white shadow-sm cursor-pointer transition-shadow focus:outline-none focus:ring-2 focus:ring-primary/40"
+      aria-disabled={!isPosted}
+      className={clsx(
+        "flex flex-col w-full h-full rounded-lg py-4 px-4 bg-white shadow-sm transition-shadow focus:outline-none",
+        isPosted
+          ? "cursor-pointer focus:ring-2 focus:ring-primary/40"
+          : "cursor-default opacity-80"
+      )}
     >
       <div className="flex flex-col h-full gap-[72px]">
         {/* Top Section */}
@@ -213,20 +223,26 @@ const RecruitCard = ({ recruit }: RecruitCardProps) => {
               </div>
             )}
           </div>
-          {isPosted && (
-            <div className="flex flex-col gap-1">
-              <button
-                type="button"
-                onClick={handleCopyLink}
-                className="w-fit rounded-full border border-primary/40 px-3 py-1 text-12-semibold text-primary transition hover:bg-primary/10"
-              >
-                링크 복사하기
-              </button>
-              {copyMessage && (
-                <p className="text-12-medium text-primary">{copyMessage}</p>
-              )}
-            </div>
-          )}
+          <div className="flex min-h-[46px] flex-col justify-center gap-1">
+            {isPosted ? (
+              <>
+                <button
+                  type="button"
+                  onClick={handleCopyLink}
+                  className="w-fit rounded-full border border-primary/40 px-3 py-1 text-12-semibold text-primary transition hover:bg-primary/10"
+                >
+                  링크 복사하기
+                </button>
+                {copyMessage && (
+                  <p className="text-12-medium text-primary">{copyMessage}</p>
+                )}
+              </>
+            ) : (
+              <p className="text-12-medium text-gray-400">
+                모집 게시 후 링크를 공유할 수 있어요.
+              </p>
+            )}
+          </div>
         </div>
 
         {/* Bottom Section */}
@@ -257,52 +273,55 @@ const RecruitCard = ({ recruit }: RecruitCardProps) => {
           </button>
         </div>
       </div>
-      {isModalOpen && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
-          onClick={(event) => {
-            event.stopPropagation();
-            setIsModalOpen(false);
-          }}
-        >
+      {isModalOpen &&
+        typeof document !== "undefined" &&
+        createPortal(
           <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby={`recruit-posting-title-${id}`}
-            className="flex w-full max-w-[360px] flex-col gap-6 rounded-2xl bg-white p-6 shadow-lg"
-            onClick={(event) => event.stopPropagation()}
+            className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 p-4"
+            onClick={(event) => {
+              event.stopPropagation();
+              setIsModalOpen(false);
+            }}
           >
-            <div className="flex flex-col gap-2">
-              <div
-                id={`recruit-posting-title-${id}`}
-                className="text-lg font-semibold text-gray-900"
-              >
-                모집 게시
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby={`recruit-posting-title-${id}`}
+              className="flex w-full max-w-[360px] flex-col gap-6 rounded-2xl bg-white p-6 shadow-[0_20px_60px_rgba(0,0,0,0.18)]"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <div className="flex flex-col gap-2">
+                <div
+                  id={`recruit-posting-title-${id}`}
+                  className="text-lg font-semibold text-gray-900"
+                >
+                  모집 게시
+                </div>
+                <div className="text-sm text-gray-600">
+                  한번 게시하면 수정할 수 없습니다.
+                </div>
               </div>
-              <div className="text-sm text-gray-600">
-                한번 게시하면 수정할 수 없습니다.
+              <div className="flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={handleModalCancel}
+                  className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                >
+                  취소
+                </button>
+                <button
+                  type="button"
+                  onClick={handleModalConfirm}
+                  disabled={isPending}
+                  className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {isPending ? "처리 중..." : "확인"}
+                </button>
               </div>
             </div>
-            <div className="flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={handleModalCancel}
-                className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
-              >
-                취소
-              </button>
-              <button
-                type="button"
-                onClick={handleModalConfirm}
-                disabled={isPending}
-                className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {isPending ? "처리 중..." : "확인"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body
+        )}
     </div>
   );
 };
