@@ -80,3 +80,29 @@ export function useManagerLogin() {
     mutationFn: loginManager,
   });
 }
+
+export type VerifyManagerEmailRequest = {
+  email: string;
+  univName: string;
+};
+
+export type VerifyManagerEmailResponse = {
+  code: number;
+  message: string;
+  data: {
+    isAuthorize: boolean;
+  };
+};
+
+async function verifyManagerEmail(
+  payload: VerifyManagerEmailRequest
+): Promise<VerifyManagerEmailResponse> {
+  const { data } = await apiClient.post(API_URLS.MANAGER_EMAIL_VERIFY, payload);
+  return data as VerifyManagerEmailResponse;
+}
+
+export function useVerifyManagerEmail() {
+  return useMutation({
+    mutationFn: verifyManagerEmail,
+  });
+}

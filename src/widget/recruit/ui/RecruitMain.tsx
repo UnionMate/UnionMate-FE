@@ -1,6 +1,6 @@
-import RecruitCard from "../components/RecruitCard";
 import { useQuery } from "@tanstack/react-query";
-import { getRecruitments } from "@/api/recruitment";
+import { getRecruitments } from "@/features/recruitment/api/recruitment";
+import RecruitCard from "@/features/recruitment/components/RecruitCard";
 
 const RecruitMain = () => {
   const { data: recruitmentsData, isLoading } = useQuery({

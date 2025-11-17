@@ -1,5 +1,5 @@
 import { Toaster } from "@/components/ui/sonner";
-import { getRecruitmentDetail } from "@/api/recruitment";
+import { getRecruitmentDetail } from "@/features/recruitment/api/recruitment";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation, useParams } from "react-router-dom";
 

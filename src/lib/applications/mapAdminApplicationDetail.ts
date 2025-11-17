@@ -6,13 +6,35 @@ import type {
   ApplicantDetail,
   ApplicantQuestion,
 } from "@/widget/recruitdetail/types";
-import type { RecruitmentDetailData } from "@/api/recruitment";
+import type { RecruitmentDetailData } from "@/features/recruitment/api/recruitment";
 import { mapEvaluationStatusToApplicantStatus } from "./statusMeta";
 
-const RECRUITMENT_STAGE_LABEL: Record<string, string> = {
+const RECRUITMENT_STAGE_LABEL = {
   DOCUMENT_SCREENING: "서류 심사",
   INTERVIEW: "면접",
   FINAL: "최종 전형",
+} as const;
+
+type RecruitmentStageKey = keyof typeof RECRUITMENT_STAGE_LABEL;
+
+const STAGE_FLOW: RecruitmentStageKey[] = [
+  "DOCUMENT_SCREENING",
+  "INTERVIEW",
+  "FINAL",
+];
+
+const buildStageSteps = (currentStage?: string) => {
+  if (!currentStage) {
+    return ["지원 단계"];
+  }
+  const normalizedStage = currentStage as RecruitmentStageKey;
+  const stageIndex = STAGE_FLOW.indexOf(normalizedStage);
+  if (stageIndex === -1) {
+    return ["지원 단계"];
+  }
+  return STAGE_FLOW.slice(0, stageIndex + 1).map(
+    (stage) => RECRUITMENT_STAGE_LABEL[stage]
+  );
 };
 
 const formatDisplayDate = (value?: string) => {
@@ -344,8 +366,7 @@ export const mapAdminApplicationDetailToApplicant = (
   detail: ApplicationAdminDetail,
   recruitmentDetail?: RecruitmentDetailData
 ): ApplicantDetail => {
-  const stageLabel =
-    RECRUITMENT_STAGE_LABEL[detail.stage?.recruitmentStatus] ?? "지원 단계";
+  const stageSteps = buildStageSteps(detail.stage?.recruitmentStatus);
   const interviewTimeIso = detail.interview?.time;
   const applicantName = detail.applicant?.name ?? "이름 미확인";
   const applicantEmail = detail.applicant?.email ?? "-";
@@ -361,7 +382,7 @@ export const mapAdminApplicationDetailToApplicant = (
     ),
     appliedTrack: recruitmentName,
     submittedAt: detail.submittedAt ?? "",
-    steps: [stageLabel],
+    steps: stageSteps,
     profile: [
       { label: "지원자명", value: applicantName },
       { label: "이메일", value: applicantEmail },

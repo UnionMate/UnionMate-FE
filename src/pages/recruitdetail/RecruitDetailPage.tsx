@@ -1,6 +1,6 @@
 import { useParams } from "react-router-dom";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { getRecruitments, sendRecruitmentMail } from "@/api/recruitment";
+import { getRecruitments, sendRecruitmentMail } from "@/features/recruitment/api/recruitment";
 import RecruitDetailHeader from "@/widget/recruitdetail/ui/RecruitDetailHeader";
 import RecruitDetailMain from "@/widget/recruitdetail/ui/RecruitDetailMain";
 import RecruitDetailMainHeader, {

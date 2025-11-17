@@ -1,7 +1,8 @@
 import {
   getRecruitmentFinalResult,
   type RecruitmentFinalResultResponse,
-} from "@/api/recruitment";
+} from "@/features/recruitment/api/recruitment";
+import { formatKoreanDate, formatKoreanDateTime, formatKoreanTime } from "@/shared/utils/date";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
@@ -12,42 +13,6 @@ type StageMeta = {
   description: string;
   tone: "success" | "warning" | "error" | "default";
   showInterview: boolean;
-};
-
-const formatDate = (value?: string) => {
-  if (!value) return "-";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-  return new Intl.DateTimeFormat("ko", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-    weekday: "short",
-  }).format(date);
-};
-
-const formatTime = (value?: string) => {
-  if (!value) return "-";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-  return new Intl.DateTimeFormat("ko", {
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(date);
-};
-
-const formatDateTime = (value?: string) => {
-  if (!value) return "-";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-  return new Intl.DateTimeFormat("ko", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-    weekday: "short",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(date);
 };
 
 const getStageMeta = (
@@ -153,7 +118,7 @@ const RecruitmentFinalResultPage = () => {
     [result?.stage?.evaluationStatus, result?.stage?.recruitmentStatus]
   );
 
-  const renderStateMessage = () => {
+  const stateMessage = useMemo(() => {
     if (!canRequest) {
       return {
         title: "필수 정보가 누락되었습니다.",
@@ -170,7 +135,8 @@ const RecruitmentFinalResultPage = () => {
     if (isError) {
       return {
         title: "결과를 불러오지 못했습니다.",
-        description: "잠시 후 다시 시도하거나 학생회 담당자에게 문의해 주세요.",
+        description:
+          "잠시 후 다시 시도하거나 학생회 담당자에게 문의해 주세요.",
       };
     }
     if (!result) {
@@ -180,9 +146,7 @@ const RecruitmentFinalResultPage = () => {
       };
     }
     return null;
-  };
-
-  const stateMessage = renderStateMessage();
+  }, [canRequest, isError, isLoading, result]);
 
   return (
     <div className="relative min-h-screen bg-black-5">
@@ -233,7 +197,7 @@ const RecruitmentFinalResultPage = () => {
                     {recruitmentName || "모집 전형"}
                   </p>
                   <p className="max-w-full truncate text-13-regular text-black-60 md:text-14-regular">
-                    {formatDateTime(result?.interview?.time)}
+                    {formatKoreanDateTime(result?.interview?.time)}
                   </p>
                 </section>
 
@@ -243,10 +207,10 @@ const RecruitmentFinalResultPage = () => {
                       면접 안내
                     </p>
                     <p className="max-w-full truncate text-title-16-semibold text-black-100 md:text-title-18-semibold">
-                      {formatDate(result?.interview?.time)}
+                      {formatKoreanDate(result?.interview?.time)}
                     </p>
                     <p className="max-w-full truncate text-13-regular text-black-60 md:text-14-regular">
-                      {formatTime(result?.interview?.time)}
+                      {formatKoreanTime(result?.interview?.time)}
                     </p>
                     <p className="max-w-full truncate text-13-regular text-black-80 md:text-14-regular">
                       장소: {result?.interview?.place || "추후 공지 예정"}

@@ -69,7 +69,7 @@ const ChangeClubNameContainer = () => {
 
       <form
         onSubmit={handleSubmit}
-        className="mt-8 flex flex-col gap-4 rounded-xl border border-gray-200 bg-gray-50 p-5 sm:flex-row sm:items-start sm:justify-between"
+        className="mt-8 flex flex-col gap-4 rounded-xl border border-gray-200 bg-gray-50 p-5"
       >
         <div className="flex w-full flex-1 flex-col gap-3">
           <label
@@ -78,35 +78,36 @@ const ChangeClubNameContainer = () => {
           >
             새 학생회명
           </label>
-          <input
-            id="club-name"
-            value={draftName}
-            onChange={(event) => setDraftName(event.target.value)}
-            className="min-w-0 flex-1 rounded-lg border border-gray-300 bg-white px-4 py-2 text-16-regular text-gray-900 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
-            placeholder="변경할 학생회명을 입력하세요"
-            maxLength={30}
-          />
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <input
+              id="club-name"
+              value={draftName}
+              onChange={(event) => setDraftName(event.target.value)}
+              className="min-w-0 flex-1 rounded-lg border border-gray-300 bg-white px-4 py-2 text-16-regular text-gray-900 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
+              placeholder="변경할 학생회명을 입력하세요"
+              maxLength={30}
+            />
+            <div className="flex items-center gap-2 sm:self-stretch">
+              <button
+                type="button"
+                onClick={handleReset}
+                className="rounded-lg border border-gray-300 px-4 py-2 text-15-medium text-gray-600 transition hover:bg-gray-100"
+              >
+                초기화
+              </button>
+              <button
+                type="submit"
+                disabled={isSaveDisabled}
+                className="rounded-lg bg-primary px-5 py-2 text-15-semibold text-white transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                저장
+              </button>
+            </div>
+          </div>
           <p className="text-14-regular text-gray-500">
             현재 등록된 학생회명은 표시되지 않아요. 바꾸고 싶은 이름을 직접
             입력해 주세요.
           </p>
-        </div>
-
-        <div className="flex items-center gap-2 self-end sm:self-auto">
-          <button
-            type="button"
-            onClick={handleReset}
-            className="rounded-lg border border-gray-300 px-4 py-2 text-15-medium text-gray-600 transition hover:bg-gray-100"
-          >
-            초기화
-          </button>
-          <button
-            type="submit"
-            disabled={isSaveDisabled}
-            className="rounded-lg bg-primary px-5 py-2 text-15-semibold text-white transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            저장
-          </button>
         </div>
       </form>
 

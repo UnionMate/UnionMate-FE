@@ -2,7 +2,7 @@ import { API_URLS, apiClient } from "./config";
 import type {
   RecruitmentItemType,
   SubmitApplicationRequest,
-} from "./recruitment";
+} from "@/features/recruitment/api/recruitment";
 
 type ApplicationSelectOption = {
   optionId?: number;

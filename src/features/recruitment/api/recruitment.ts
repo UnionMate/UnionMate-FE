@@ -1,4 +1,10 @@
-import { API_URLS, apiClient } from "./config";
+import { API_URLS, apiClient } from "@/api/config";
+
+export type ApiResponse<T = Record<string, never>> = {
+  code: number;
+  message: string;
+  data: T;
+};
 
 export type RecruitmentItemType =
   | "TEXT"
@@ -35,7 +41,13 @@ export interface CreateRecruitmentRequest {
   items: CreateRecruitmentItemRequest[];
 }
 
-export type CreateRecruitmentResponse = Record<string, unknown>;
+export type CreateRecruitmentResponse = ApiResponse<{
+  recruitmentId: number;
+  name: string;
+  isActive: boolean;
+  recruitmentStatus: string;
+  endAt?: string;
+}>;
 
 export type Recruitment = {
   id: number;
@@ -44,11 +56,7 @@ export type Recruitment = {
   recruitmentStatus: string;
 };
 
-export type GetRecruitmentsResponse = {
-  code: number;
-  message: string;
-  data: Recruitment[];
-};
+export type GetRecruitmentsResponse = ApiResponse<Recruitment[]>;
 
 export const createRecruitment = async (
   payload: CreateRecruitmentRequest
@@ -68,17 +76,13 @@ export type ActivateRecruitmentRequest = {
   active: boolean;
 };
 
-export type ActivateRecruitmentResponse = {
-  code: number;
-  message: string;
-  data: {
-    recruitmentId: number;
-    active: boolean;
-    open: boolean;
-    startAt: string;
-    endAt: string;
-  };
-};
+export type ActivateRecruitmentResponse = ApiResponse<{
+  recruitmentId: number;
+  active: boolean;
+  open: boolean;
+  startAt: string;
+  endAt: string;
+}>;
 
 export const activateRecruitment = async (
   recruitmentId: number,
@@ -95,11 +99,7 @@ export const activateRecruitment = async (
   return data as ActivateRecruitmentResponse;
 };
 
-export type DeleteRecruitmentResponse = {
-  code: number;
-  message: string;
-  data: Record<string, never>;
-};
+export type DeleteRecruitmentResponse = ApiResponse;
 
 export const deleteRecruitment = async (
   recruitmentId: number
@@ -134,11 +134,7 @@ export type RecruitmentDetailData = {
   items: RecruitmentDetailItem[];
 };
 
-export type RecruitmentDetailResponse = {
-  code: number;
-  message: string;
-  data: RecruitmentDetailData;
-};
+export type RecruitmentDetailResponse = ApiResponse<RecruitmentDetailData>;
 
 export const getRecruitmentDetail = async (
   recruitmentId: number
@@ -151,7 +147,7 @@ export const getRecruitmentDetail = async (
 };
 
 export type UpdateRecruitmentRequest = CreateRecruitmentRequest;
-export type UpdateRecruitmentResponse = CreateRecruitmentResponse;
+export type UpdateRecruitmentResponse = ApiResponse<RecruitmentDetailData>;
 
 export const updateRecruitment = async (
   recruitmentId: number,
@@ -179,13 +175,9 @@ export type SubmitApplicationRequest = {
   answers: ApplicationAnswerPayload[];
 };
 
-export type SubmitApplicationResponse = {
-  code: number;
-  message: string;
-  data: {
-    applicationId: number;
-  };
-};
+export type SubmitApplicationResponse = ApiResponse<{
+  applicationId: number;
+}>;
 
 export const submitApplication = async (
   recruitmentId: number,
@@ -204,31 +196,30 @@ export type RecruitmentFinalResultRequest = {
   email: string;
 };
 
-export type RecruitmentFinalResultResponse = {
-  code: number;
-  message: string;
-  data: {
-    applicant: {
-      name: string;
-      email: string;
-      tel: string;
-    };
-    councilName: string;
-    councilManagerEmail: string;
-    recruitment: {
-      recruitmentId: number;
-      recruitmentName: string;
-    };
-    interview: {
-      time: string;
-      place: string;
-    };
-    stage: {
-      recruitmentStatus: string;
-      evaluationStatus: string;
-    };
+export type RecruitmentFinalResultData = {
+  applicant: {
+    name: string;
+    email: string;
+    tel: string;
+  };
+  councilName: string;
+  councilManagerEmail: string;
+  recruitment: {
+    recruitmentId: number;
+    recruitmentName: string;
+  };
+  interview: {
+    time: string;
+    place: string;
+  };
+  stage: {
+    recruitmentStatus: string;
+    evaluationStatus: string;
   };
 };
+
+export type RecruitmentFinalResultResponse =
+  ApiResponse<RecruitmentFinalResultData>;
 
 export const getRecruitmentFinalResult = async (
   recruitmentId: number,
@@ -249,10 +240,7 @@ export type SendRecruitmentMailRequest = {
   type: "interview" | "final";
 };
 
-export type SendRecruitmentMailResponse = {
-  code: number;
-  message: string;
-};
+export type SendRecruitmentMailResponse = ApiResponse;
 
 export const sendRecruitmentMail = async (
   recruitmentId: number,

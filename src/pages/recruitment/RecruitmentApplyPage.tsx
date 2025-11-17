@@ -7,7 +7,7 @@ import {
   type RecruitmentDetailItem,
   type RecruitmentItemOption,
   type SubmitApplicationRequest,
-} from "@/api/recruitment";
+} from "@/features/recruitment/api/recruitment";
 import { FIXED_FIELDS } from "@/widget/formEdit/constants";
 import ApplicationQuestionCard from "@/widget/recruitmentApply/ui/ApplicationQuestionCard";
 import { Toaster } from "@/components/ui/sonner";

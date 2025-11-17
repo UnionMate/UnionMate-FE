@@ -5,7 +5,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import RecruitApplicantMain from "@/widget/recruitApplicant/ui/RecruitApplicantMain";
 import { getApplicationAdminDetail } from "@/api/application";
 import { mapAdminApplicationDetailToApplicant } from "@/lib/applications/mapAdminApplicationDetail";
-import { getRecruitmentDetail } from "@/api/recruitment";
+import { getRecruitmentDetail } from "@/features/recruitment/api/recruitment";
 import {
   buildApplicantStageKey,
   useApplicantStageStore,

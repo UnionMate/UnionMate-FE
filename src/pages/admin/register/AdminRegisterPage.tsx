@@ -1,42 +1,140 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Button from "@/shared/components/Button";
-import { useManagerRegister } from "@/api/auth";
+import { useManagerRegister, useVerifyManagerEmail } from "@/api/auth";
+
+type VerificationStatus = "idle" | "success" | "failed";
+
+type FormState = {
+  name: string;
+  schoolName: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
+};
+
+const createInitialFormState = (): FormState => ({
+  name: "",
+  schoolName: "",
+  email: "",
+  password: "",
+  confirmPassword: "",
+});
+
+type InputFieldProps = {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+  type?: string;
+};
+
+const InputField = ({
+  label,
+  value,
+  onChange,
+  placeholder,
+  type = "text",
+}: InputFieldProps) => (
+  <div className="space-y-2">
+    <label className="text-sm font-medium text-gray-700">{label}</label>
+    <input
+      type={type}
+      value={value}
+      onChange={(event) => onChange(event.target.value)}
+      placeholder={placeholder}
+      className="w-full rounded-xl border border-gray-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-colors duration-200"
+    />
+  </div>
+);
 
 const AdminRegisterPage = () => {
   const navigate = useNavigate();
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+  const [form, setForm] = useState<FormState>(createInitialFormState());
   const [errorMessage, setErrorMessage] = useState("");
-  const [isVerificationRequested, setIsVerificationRequested] = useState(false);
-  const [verificationCode, setVerificationCode] = useState("");
-  const [verificationError, setVerificationError] = useState("");
+  const [verification, setVerification] = useState<{
+    state: VerificationStatus;
+    message: string;
+  }>({ state: "idle", message: "" });
+  const [isVerified, setIsVerified] = useState(false);
   const { mutate, isPending } = useManagerRegister();
+  const { mutate: verifyEmail, isPending: isVerifying } =
+    useVerifyManagerEmail();
 
-  const handleRequestVerification = () => {
-    if (!email.trim()) {
-      setVerificationError("학교 이메일을 입력해주세요.");
+  const updateField =
+    (field: keyof FormState) =>
+    (value: string): void => {
+      setForm((previous) => ({ ...previous, [field]: value }));
+      if (field === "email" || field === "schoolName") {
+        setIsVerified(false);
+        setVerification({ state: "idle", message: "" });
+      }
+    };
+
+  const handleValidateEmail = () => {
+    const trimmedSchoolName = form.schoolName.trim();
+    const trimmedEmail = form.email.trim();
+
+    if (!trimmedSchoolName) {
+      setVerification({
+        state: "failed",
+        message: "학교 이름을 입력해주세요.",
+      });
+      setIsVerified(false);
       return;
     }
-    setVerificationError("");
-    // TODO: 연동되면 실제 API 호출로 교체
-    setIsVerificationRequested(true);
-  };
 
-  const handleVerifyCode = () => {
-    if (!verificationCode.trim()) {
-      setVerificationError("인증번호를 입력해주세요.");
+    if (!trimmedEmail) {
+      setVerification({
+        state: "failed",
+        message: "학교 이메일을 입력해주세요.",
+      });
+      setIsVerified(false);
       return;
     }
-    setVerificationError("");
-    // TODO: 연동되면 실제 인증 확인 로직으로 교체
+
+    verifyEmail(
+      { email: trimmedEmail, univName: trimmedSchoolName },
+      {
+        onSuccess: (response) => {
+          if (response.data?.isAuthorize) {
+            setVerification({
+              state: "success",
+              message: "학교 인증이 완료되었습니다.",
+            });
+            setIsVerified(true);
+          } else {
+            setVerification({
+              state: "failed",
+              message: "학교 인증에 실패했습니다. 다시 시도해주세요.",
+            });
+            setIsVerified(false);
+          }
+        },
+        onError: (error: unknown) => {
+          const message =
+            error instanceof Error
+              ? error.message
+              : "학교 인증 요청에 실패했습니다.";
+          setVerification({
+            state: "failed",
+            message,
+          });
+          setIsVerified(false);
+        },
+      }
+    );
   };
 
   const handleRegister = () => {
+    const { name, email, password, confirmPassword } = form;
     if (!name || !email || !password || !confirmPassword) {
       setErrorMessage("모든 정보를 입력해 주세요.");
+      return;
+    }
+
+    if (!isVerified) {
+      setErrorMessage("학교 이메일 유효성 검사를 완료해 주세요.");
       return;
     }
 
@@ -66,6 +164,9 @@ const AdminRegisterPage = () => {
     );
   };
 
+  const verificationMessageClass =
+    verification.state === "success" ? "text-green-600" : "text-red-500";
+
   return (
     <div className="flex items-center justify-center h-screen p-8 bg-white">
       <div className="w-full max-w-md space-y-8">
@@ -79,16 +180,18 @@ const AdminRegisterPage = () => {
         </div>
 
         <div className="space-y-5">
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700">이름</label>
-            <input
-              type="text"
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-              placeholder="홍길동"
-              className="w-full rounded-xl border border-gray-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-colors duration-200"
-            />
-          </div>
+          <InputField
+            label="이름"
+            value={form.name}
+            onChange={updateField("name")}
+            placeholder="홍길동"
+          />
+          <InputField
+            label="학교 이름"
+            value={form.schoolName}
+            onChange={updateField("schoolName")}
+            placeholder="예: 가천대학교"
+          />
 
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-700">
@@ -97,67 +200,41 @@ const AdminRegisterPage = () => {
             <div className="flex gap-2">
               <input
                 type="email"
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
+                value={form.email}
+                onChange={(event) => updateField("email")(event.target.value)}
                 placeholder="name@university.ac.kr"
                 className="flex-1 rounded-xl border border-gray-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-colors duration-200"
               />
               <button
                 type="button"
-                onClick={handleRequestVerification}
-                className="whitespace-nowrap rounded-xl border border-primary px-4 py-3 text-sm font-semibold text-primary transition hover:bg-primary/10"
+                onClick={handleValidateEmail}
+                disabled={isVerifying}
+                className="whitespace-nowrap rounded-xl border border-primary px-4 py-3 text-sm font-semibold text-primary transition hover:bg-primary/10 disabled:opacity-60"
               >
-                인증번호 받기
+                {isVerifying ? "검사 중..." : "학교 이메일 인증"}
               </button>
             </div>
-            {isVerificationRequested && (
-              <div className="flex gap-2 mt-3">
-                <input
-                  type="text"
-                  value={verificationCode}
-                  onChange={(event) => setVerificationCode(event.target.value)}
-                  placeholder="인증번호를 입력하세요"
-                  className="flex-1 rounded-xl border border-gray-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-colors duration-200"
-                />
-                <button
-                  type="button"
-                  onClick={handleVerifyCode}
-                  className="whitespace-nowrap rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-white transition hover:bg-primary/90"
-                >
-                  인증하기
-                </button>
-              </div>
-            )}
-            {verificationError && (
-              <p className="text-sm text-red-500">{verificationError}</p>
+            {verification.message && (
+              <p className={`text-sm ${verificationMessageClass}`}>
+                {verification.message}
+              </p>
             )}
           </div>
 
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700">
-              비밀번호
-            </label>
-            <input
-              type="password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              placeholder="영문, 숫자 포함 8자 이상"
-              className="w-full rounded-xl border border-gray-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-colors duration-200"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700">
-              비밀번호 확인
-            </label>
-            <input
-              type="password"
-              value={confirmPassword}
-              onChange={(event) => setConfirmPassword(event.target.value)}
-              placeholder="비밀번호를 다시 입력하세요"
-              className="w-full rounded-xl border border-gray-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-colors duration-200"
-            />
-          </div>
+          <InputField
+            label="비밀번호"
+            value={form.password}
+            onChange={updateField("password")}
+            placeholder="영문, 숫자 포함 8자 이상"
+            type="password"
+          />
+          <InputField
+            label="비밀번호 확인"
+            value={form.confirmPassword}
+            onChange={updateField("confirmPassword")}
+            placeholder="비밀번호를 다시 입력하세요"
+            type="password"
+          />
         </div>
 
         {errorMessage && (

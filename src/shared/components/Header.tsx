@@ -1,6 +1,6 @@
 import { ArrowLeft, Plus } from "lucide-react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { createRecruitment, updateRecruitment } from "@/api/recruitment";
+import { createRecruitment, updateRecruitment } from "@/features/recruitment/api/recruitment";
 import { convertFormDataToApiRequest } from "@/api/formDataConverter";
 import { useContext } from "react";
 import { FormEditContext } from "@/widget/formEdit/context/FormEditContext";

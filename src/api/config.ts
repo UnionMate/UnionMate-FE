@@ -13,6 +13,7 @@ export const API_URLS = {
   RECRUITMENT_SEND_MAIL: "/backend/recruitment/:recruitmentId/send/mail",
   MANAGER_REGISTER: "/backend/auth/manager/register",
   MANAGER_LOGIN: "/backend/auth/manager/login",
+  MANAGER_EMAIL_VERIFY: "/backend/auth/manager/email",
   CREATE_CLUB: "/backend/councils",
   CHANGE_COUNCIL_NAME: "/backend/councils/:councilId/names",
   GET_COUNCIL_MEMBERS: "/backend/councils/:councilId/members",

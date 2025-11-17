@@ -3,7 +3,7 @@ import type { ChangeEvent } from "react";
 import type {
   RecruitmentDetailItem,
   RecruitmentItemOption,
-} from "@/api/recruitment";
+} from "@/features/recruitment/api/recruitment";
 
 type ApplicationQuestionCardProps = {
   item: RecruitmentDetailItem;

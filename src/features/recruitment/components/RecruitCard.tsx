@@ -3,9 +3,9 @@ import clsx from "clsx";
 import { useState, useEffect, useRef } from "react";
 import type { KeyboardEvent, MouseEvent, SyntheticEvent } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createPortal } from "react-dom";
-import { activateRecruitment, deleteRecruitment } from "@/api/recruitment";
+import { useActivateRecruitmentMutation, useDeleteRecruitmentMutation } from "@/features/recruitment/hooks/useRecruitmentMutations";
+import { useCopyToClipboard } from "@/shared/hooks/useCopyToClipboard";
 import type { RecruitCardData } from "../constants/recruitCardList";
 
 interface RecruitCardProps {
@@ -26,35 +26,29 @@ const RecruitCard = ({ recruit }: RecruitCardProps) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isPosted, setIsPosted] = useState(isActive);
-  const [copyMessage, setCopyMessage] = useState("");
-  const queryClient = useQueryClient();
+  const { copy, result: copyResult } = useCopyToClipboard();
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const { mutate: activateRecruit, isPending } = useMutation({
-    mutationFn: () => activateRecruitment(id, { active: true }),
-    onSuccess: (response) => {
-      setIsPosted(response.data.active);
-      setIsModalOpen(false);
-      // recruitments 목록 새로고침
-      queryClient.invalidateQueries({ queryKey: ["recruitments"] });
-    },
-    onError: (error) => {
-      console.error("모집 게시 실패:", error);
-      alert("모집 게시에 실패했습니다. 다시 시도해주세요.");
-    },
-  });
+  const { mutate: activateRecruit, isPending } =
+    useActivateRecruitmentMutation(id, {
+      onSuccess: (response) => {
+        setIsPosted(response.data.active);
+        setIsModalOpen(false);
+      },
+      onError: () => {
+        alert("모집 게시에 실패했습니다. 다시 시도해주세요.");
+      },
+    });
 
-  const { mutate: removeRecruit, isPending: isDeletePending } = useMutation({
-    mutationFn: () => deleteRecruitment(id),
-    onSuccess: () => {
-      setIsDropdownOpen(false);
-      queryClient.invalidateQueries({ queryKey: ["recruitments"] });
-    },
-    onError: (error) => {
-      console.error("모집 삭제 실패:", error);
-      alert("모집 삭제에 실패했습니다. 다시 시도해주세요.");
-    },
-  });
+  const { mutate: removeRecruit, isPending: isDeletePending } =
+    useDeleteRecruitmentMutation(id, {
+      onSuccess: () => {
+        setIsDropdownOpen(false);
+      },
+      onError: () => {
+        alert("모집 삭제에 실패했습니다. 다시 시도해주세요.");
+      },
+    });
 
   const handleNavigate = () => {
     if (!isPosted) {
@@ -117,7 +111,7 @@ const RecruitCard = ({ recruit }: RecruitCardProps) => {
     removeRecruit();
   };
 
-  const handleCopyLink = async (event: MouseEvent<HTMLButtonElement>) => {
+  const handleCopyLink = (event: MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
     event.stopPropagation();
     const appOrigin = resolveAppOrigin();
@@ -125,27 +119,7 @@ const RecruitCard = ({ recruit }: RecruitCardProps) => {
       ? `${appOrigin}/recruitment/${id}`
       : `/recruitment/${id}`;
 
-    try {
-      if (navigator.clipboard && "writeText" in navigator.clipboard) {
-        await navigator.clipboard.writeText(link);
-      } else {
-        const textarea = document.createElement("textarea");
-        textarea.value = link;
-        textarea.style.position = "fixed";
-        textarea.style.opacity = "0";
-        document.body.appendChild(textarea);
-        textarea.focus();
-        textarea.select();
-        document.execCommand("copy");
-        document.body.removeChild(textarea);
-      }
-      setCopyMessage("링크가 복사되었어요.");
-      setTimeout(() => setCopyMessage(""), 2500);
-    } catch (error) {
-      console.error("링크 복사 실패:", error);
-      setCopyMessage("복사에 실패했습니다. 다시 시도해주세요.");
-      setTimeout(() => setCopyMessage(""), 2500);
-    }
+    void copy(link, { message: "링크가 복사되었어요.", tone: "success" });
   };
 
   // 외부 클릭 시 드롭다운 닫기
@@ -233,13 +207,20 @@ const RecruitCard = ({ recruit }: RecruitCardProps) => {
                 >
                   링크 복사하기
                 </button>
-                {copyMessage && (
-                  <p className="text-12-medium text-primary">{copyMessage}</p>
+                {copyResult && (
+                  <p
+                    className={clsx(
+                      "text-12-medium",
+                      copyResult.tone === "error" ? "text-error" : "text-primary"
+                    )}
+                  >
+                    {copyResult.message}
+                  </p>
                 )}
               </>
             ) : (
               <p className="text-12-medium text-gray-400">
-                모집 게시 후 링크를 공유할 수 있어요.
+                토글을 활성화 시켜 모집을 시작할 수 있습니다
               </p>
             )}
           </div>

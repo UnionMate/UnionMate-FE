@@ -8,7 +8,7 @@ import type {
   CreateRecruitmentItemRequest,
   RecruitmentDetailData,
   RecruitmentDetailItem,
-} from "./recruitment";
+} from "@/features/recruitment/api/recruitment";
 import { FIXED_FIELDS } from "@/widget/formEdit/constants";
 
 /**

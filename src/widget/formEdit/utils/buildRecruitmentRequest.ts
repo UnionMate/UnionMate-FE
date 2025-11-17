@@ -2,7 +2,7 @@ import type {
   CreateRecruitmentItemRequest,
   CreateRecruitmentRequest,
   RecruitmentItemOption,
-} from "@/api/recruitment";
+} from "@/features/recruitment/api/recruitment";
 import { FIXED_FIELDS } from "../constants";
 import type { QuestionConfig } from "../types";
 

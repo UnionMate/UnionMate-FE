@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { getRecruitmentDetail } from "@/api/recruitment";
+import { getRecruitmentDetail } from "@/features/recruitment/api/recruitment";
 import { convertRecruitmentDetailToFormData } from "@/api/formDataConverter";
 import { useFormEditContext } from "@/widget/formEdit/context/useFormEditContext";
 import FormEditPage from "./FormEditPage";
