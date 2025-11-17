@@ -18,7 +18,7 @@ import ApplicationListPage from "@/pages/applications/ApplicationListPage";
 import ApplicationEditPage from "@/pages/applications/ApplicationEditPage";
 import RecruitmentApplyPage from "@/pages/recruitment/RecruitmentApplyPage";
 import RecruitmentThankYouPage from "@/pages/recruitment/RecruitmentThankYouPage";
-import RecruitmentFinalResultPage from "@/pages/recruitment/RecruitmentFinalResultPage";
+import RecruitmentFinalResultPage from "@/features/recruitment/pages/RecruitmentFinalResultPage";
 
 export const router = createBrowserRouter([
   {
