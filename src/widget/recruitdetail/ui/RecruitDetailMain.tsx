@@ -21,6 +21,7 @@ type DocumentStateSnapshot = {
   count: number;
   canSendInterviewMail: boolean;
   allDecided: boolean;
+  canSendFinalMail: boolean;
 };
 
 type RecruitDetailMainProps = {
@@ -204,8 +205,31 @@ const RecruitDetailMain = ({
     const canSendInterviewMail = statuses.some(
       (status) => status === "pass" || status === "fail"
     );
-    onDocumentStateChange({ count: total, canSendInterviewMail, allDecided });
-  }, [applicants, onDocumentStateChange, resolveDocumentStatus]);
+    // Enable final result mail when final-stage decisions exist even if document data is empty.
+    const hasFinalInterviewDecision = interviewApplicants.some((applicant) => {
+      if (applicant.recruitmentStatus !== "FINAL") {
+        return false;
+      }
+      const status = mapEvaluationStatusToApplicantStatus(
+        applicant.evaluationStatus,
+        applicant.recruitmentStatus
+      );
+      return status !== "pending";
+    });
+    const canSendFinalMail = allDecided || hasFinalInterviewDecision;
+
+    onDocumentStateChange({
+      count: total,
+      canSendInterviewMail,
+      allDecided,
+      canSendFinalMail,
+    });
+  }, [
+    applicants,
+    interviewApplicants,
+    onDocumentStateChange,
+    resolveDocumentStatus,
+  ]);
 
   useEffect(() => {
     if (applicants.length === 0) return;

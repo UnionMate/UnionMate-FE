@@ -82,11 +82,11 @@ const RecruitDetailPage = () => {
           onDocumentStateChange={({
             count,
             canSendInterviewMail,
-            allDecided,
+            canSendFinalMail,
           }) => {
             setDocumentCount(count);
             setDocumentMailReady(canSendInterviewMail);
-            setFinalMailReady(allDecided);
+            setFinalMailReady(canSendFinalMail);
           }}
           onInterviewStateChange={(count) => setInterviewCount(count)}
         />
