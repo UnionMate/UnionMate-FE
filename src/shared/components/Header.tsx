@@ -18,6 +18,9 @@ const Header = () => {
   const isFormEditPage = location.pathname.includes("/applicationform/edit");
   const isFormUpdatePage = location.pathname.includes("/update/");
   const isFormBuilderPage = isFormEditPage || isFormUpdatePage;
+  const isApplicationEditPage = location.pathname.includes(
+    "/applications/update/"
+  );
 
   const handleBack = () => {
     navigate(-1);
@@ -130,7 +133,13 @@ const Header = () => {
             className="flex items-center gap-2 rounded-xl bg-primary px-5 py-2 text-title-14-semibold text-white transition hover:opacity-90"
           >
             <Plus className="h-4 w-4" />
-            <span>{isFormUpdatePage ? "모집 수정하기" : "모집 생성하기"}</span>
+            <span>
+              {isFormUpdatePage
+                ? isApplicationEditPage
+                  ? "지원서 수정하기"
+                  : "모집 수정하기"
+                : "모집 생성하기"}
+            </span>
           </button>
         </div>
       )}

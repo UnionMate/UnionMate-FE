@@ -656,6 +656,10 @@ const ApplicationEditPage = () => {
         replace: true,
         state: { refreshed: true, applicationId: parsedId },
       });
+      if (typeof window !== "undefined") {
+        // ensure latest 데이터로 새로고침
+        setTimeout(() => window.location.reload(), 0);
+      }
     } catch (error) {
       console.error("지원서 수정 실패:", error);
       toast.error("지원서 수정에 실패했습니다. 잠시 후 다시 시도해주세요.");
@@ -744,9 +748,6 @@ const ApplicationEditPage = () => {
             <h2 className="text-title-18-semibold text-black-90">
               지원자 기본 정보
             </h2>
-            <p className="text-13-regular text-black-50">
-              이름, 전화번호, 이메일은 수정할 수 없습니다.
-            </p>
             <div className="flex flex-col gap-4">
               {fixedFieldEntries.map(({ field, item }, index) => {
                 const hasItem = Boolean(item);
@@ -782,7 +783,6 @@ const ApplicationEditPage = () => {
                     }}
                     onDateChange={() => undefined}
                     onSelectChange={() => undefined}
-                    isReadOnly
                   />
                 );
               })}
@@ -809,7 +809,7 @@ const ApplicationEditPage = () => {
           disabled={isSubmitDisabled}
           className="ml-auto rounded-2xl bg-primary px-10 py-3 text-16-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-40"
         >
-          {isPending ? "수정 중..." : "지원서 수정"}
+          {isPending ? "수정 중..." : "지원서 수정하기"}
         </button>
       </div>
     </div>
