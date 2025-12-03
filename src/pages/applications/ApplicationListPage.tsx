@@ -86,6 +86,7 @@ const ApplicationListPage = () => {
   const handleEditClick = (application: MyApplication) => {
     const applicantName = applicant?.name ?? storedName;
     const applicantEmail = applicant?.email ?? storedEmail;
+
     navigate(`/applications/update/${application.applicationId}`, {
       state: {
         recruitmentId: application.recruitmentId,
@@ -93,6 +94,24 @@ const ApplicationListPage = () => {
         applicantEmail,
       },
     });
+  };
+
+  const handleResultClick = (application: MyApplication) => {
+    const applicantName = applicant?.name ?? storedName;
+    const applicantEmail = applicant?.email ?? storedEmail;
+
+    if (!applicantName || !applicantEmail) {
+      toast.error("지원자 정보를 불러오지 못했습니다. 다시 조회해 주세요.");
+      return;
+    }
+
+    const searchParams = new URLSearchParams({
+      name: applicantName,
+      email: applicantEmail,
+      recruitmentId: String(application.recruitmentId),
+    });
+
+    navigate(`/passingresult?${searchParams.toString()}`);
   };
 
   const modal = isModalOpen ? (
@@ -252,6 +271,7 @@ const ApplicationListPage = () => {
                       <button
                         type="button"
                         className="rounded-xl border border-primary/30 px-4 py-2 text-sm font-semibold text-primary transition hover:bg-primary/10"
+                        onClick={() => handleResultClick(application)}
                       >
                         결과 확인
                       </button>
