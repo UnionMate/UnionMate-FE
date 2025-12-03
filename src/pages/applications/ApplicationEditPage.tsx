@@ -26,6 +26,85 @@ const normalizeLabel = (value?: string) => (value ?? "").trim().toLowerCase();
 const getOptionKey = (option: RecruitmentItemOption) =>
   String(option.id ?? `order-${option.order}`);
 
+const extractSelectedOptionKeys = (
+  item: RecruitmentDetailItem,
+  answer?: ApplicationAnswerDetail
+) => {
+  if (!answer || !item.options?.length) return [];
+
+  const optionMap = new Map<number, RecruitmentItemOption>();
+  const optionTitleMap = new Map<string, RecruitmentItemOption>();
+
+  item.options.forEach((option) => {
+    if (typeof option.id === "number") {
+      optionMap.set(option.id, option);
+    }
+    if (option.title) {
+      optionTitleMap.set(option.title.trim(), option);
+    }
+  });
+
+  const byIds =
+    answer.selectedOptionIds
+      ?.map((id) => optionMap.get(id))
+      .filter((option): option is RecruitmentItemOption => Boolean(option))
+      .map((option) => getOptionKey(option)) ?? [];
+  if (byIds.length > 0) return byIds;
+
+  const byTitles =
+    answer.selectedOptionTitles
+      ?.map((title) => optionTitleMap.get(title.trim()))
+      .filter((option): option is RecruitmentItemOption => Boolean(option))
+      .map((option) => getOptionKey(option)) ?? [];
+  if (byTitles.length > 0) return byTitles;
+
+  const hasSelectionFlags =
+    answer.selectOptions?.some(
+      (option) =>
+        option.selected !== undefined ||
+        option.isSelected !== undefined ||
+        option.checked !== undefined
+    ) ?? false;
+
+  const bySelectOptions =
+    answer.selectOptions
+      ?.filter((option) =>
+        hasSelectionFlags
+          ? option.selected || option.isSelected || option.checked
+          : true
+      )
+      .map((option) => {
+        if (option.optionId && optionMap.has(option.optionId)) {
+          return getOptionKey(optionMap.get(option.optionId)!);
+        }
+        if (option.title) {
+          const matched = optionTitleMap.get(option.title.trim());
+          if (matched) return getOptionKey(matched);
+        }
+        return null;
+      })
+      .filter((key): key is string => Boolean(key)) ?? [];
+
+  return bySelectOptions;
+};
+
+const normalizeSelectValue = (value: string | string[] | undefined) => {
+  if (Array.isArray(value)) return value;
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (trimmed.startsWith("[")) {
+      try {
+        const parsed = JSON.parse(trimmed);
+        if (Array.isArray(parsed)) return parsed as string[];
+      } catch {
+        // ignore parse errors
+      }
+    }
+    return trimmed.length > 0 ? [trimmed] : [];
+  }
+  return [];
+};
+
 const ApplicationEditPage = () => {
   const { applicationId } = useParams<{ applicationId: string }>();
   const navigate = useNavigate();
@@ -44,16 +123,12 @@ const ApplicationEditPage = () => {
   } = useApplicantInfoStore();
   const applicantIdentity = useMemo(
     () => ({
-      name:
-        (storeApplicantName ||
-          locationState?.applicantName ||
-          ""
-        ).trim(),
-      email:
-        (storeApplicantEmail ||
-          locationState?.applicantEmail ||
-          ""
-        ).trim(),
+      name: (storeApplicantName || locationState?.applicantName || "").trim(),
+      email: (
+        storeApplicantEmail ||
+        locationState?.applicantEmail ||
+        ""
+      ).trim(),
     }),
     [
       storeApplicantName,
@@ -67,7 +142,7 @@ const ApplicationEditPage = () => {
   const hasApplicantIdentity =
     applicantIdentity.name.length > 0 && applicantIdentity.email.length > 0;
   const [answers, setAnswers] = useState<AnswerState>({});
-  const [fixedAnswers, setFixedAnswers] = useState<Record<number, string>>({});
+  const [fixedAnswers, setFixedAnswers] = useState<AnswerState>({});
   const [defaultFixedAnswers, setDefaultFixedAnswers] = useState<
     Record<string, string>
   >(() =>
@@ -141,30 +216,25 @@ const ApplicationEditPage = () => {
 
   const fixedFieldEntries = useMemo(() => {
     const usedIds = new Set<number>();
-    return FIXED_FIELDS.map((field, index) => {
+    const matchesFieldTitle = (title: string, normalizedLabel: string) => {
+      const normalizedTitle = normalizeLabel(title);
+      return (
+        normalizedTitle === normalizedLabel ||
+        normalizedTitle.includes(normalizedLabel)
+      );
+    };
+
+    return FIXED_FIELDS.map((field) => {
       const normalizedLabel = normalizeLabel(field.label);
       const byLabel = sortedItems.find(
         (item) =>
-          normalizeLabel(item.title) === normalizedLabel &&
+          matchesFieldTitle(item.title, normalizedLabel) &&
           !usedIds.has(item.id)
       );
 
       if (byLabel) {
         usedIds.add(byLabel.id);
         return { field, item: byLabel };
-      }
-
-      const byOrder = sortedItems.find(
-        (item) =>
-          item.order === index + 1 &&
-          item.type === "TEXT" &&
-          item.required &&
-          !usedIds.has(item.id)
-      );
-
-      if (byOrder) {
-        usedIds.add(byOrder.id);
-        return { field, item: byOrder };
       }
 
       return { field, item: null };
@@ -178,6 +248,16 @@ const ApplicationEditPage = () => {
         .filter((item): item is RecruitmentDetailItem => Boolean(item)),
     [fixedFieldEntries]
   );
+
+  const fixedItemFieldMap = useMemo(() => {
+    const map = new Map<number, string>();
+    fixedFieldEntries.forEach(({ field, item }) => {
+      if (item) {
+        map.set(item.id, field.id);
+      }
+    });
+    return map;
+  }, [fixedFieldEntries]);
 
   const fixedItemIdSet = useMemo(
     () => new Set(fixedItems.map((item) => item.id)),
@@ -209,6 +289,8 @@ const ApplicationEditPage = () => {
     return map;
   }, [detail?.answers]);
 
+  const [isInitialized, setIsInitialized] = useState(false);
+
   useEffect(() => {
     if (!detail) return;
     setDefaultFixedAnswers((previous) => ({
@@ -220,9 +302,9 @@ const ApplicationEditPage = () => {
   }, [detail]);
 
   useEffect(() => {
-    if (!detail || sortedItems.length === 0) return;
+    if (!detail || sortedItems.length === 0 || isInitialized) return;
 
-    const initialFixed: Record<number, string> = {};
+    const initialFixed: AnswerState = {};
     fixedItems.forEach((item) => {
       const answer =
         answerMapById.get(item.id) ?? answerMapByOrder.get(item.order);
@@ -237,27 +319,25 @@ const ApplicationEditPage = () => {
       }
 
       if (item.type === "SELECT") {
-        const selectedIds = answer.selectedOptionIds ?? [];
-        const optionMap = new Map<number, RecruitmentItemOption>();
-        item.options?.forEach((option) => {
-          if (typeof option.id === "number") {
-            optionMap.set(option.id, option);
-          }
-        });
-
-        const selectedKeys = selectedIds
-          .map((id) => optionMap.get(id))
-          .filter((option): option is RecruitmentItemOption => Boolean(option))
-          .map((option) => getOptionKey(option));
-
+        const selectedKeys = extractSelectedOptionKeys(item, answer);
         initialFixed[item.id] = item.multiple
-          ? JSON.stringify(selectedKeys)
+          ? selectedKeys
           : selectedKeys[0] ?? "";
         return;
       }
 
+      const fieldId = fixedItemFieldMap.get(item.id);
+      const fallbackValue =
+        fieldId === "applicant-name"
+          ? detail?.name ?? ""
+          : fieldId === "applicant-email"
+          ? detail?.email ?? ""
+          : fieldId === "applicant-phone"
+          ? detail?.tel ?? ""
+          : detail?.name ?? "";
+
       const textValue =
-        answer.text ?? answer.answer ?? answer.value ?? detail?.name ?? "";
+        answer.text ?? answer.answer ?? answer.value ?? fallbackValue;
       initialFixed[item.id] = textValue;
     });
 
@@ -277,11 +357,7 @@ const ApplicationEditPage = () => {
       }
 
       if (item.type === "SELECT") {
-        const selectedIds = answer.selectedOptionIds ?? [];
-        const selectedKeys = selectedIds
-          .map((id) => item.options?.find((option) => option.id === id))
-          .filter((option): option is RecruitmentItemOption => Boolean(option))
-          .map((option) => getOptionKey(option));
+        const selectedKeys = extractSelectedOptionKeys(item, answer);
         initialAnswers[item.id] = item.multiple
           ? selectedKeys
           : selectedKeys[0] ?? "";
@@ -301,10 +377,13 @@ const ApplicationEditPage = () => {
 
     setFixedAnswers(initialFixed);
     setAnswers(initialAnswers);
+    setIsInitialized(true);
   }, [
     detail,
+    isInitialized,
     sortedItems.length,
     fixedItems,
+    fixedItemFieldMap,
     dynamicItems,
     answerMapById,
     answerMapByOrder,
@@ -357,7 +436,7 @@ const ApplicationEditPage = () => {
     });
   };
 
-  const handleFixedAnswerChange = (itemId: number, value: string) => {
+  const handleFixedAnswerChange = (itemId: number, value: AnswerValue) => {
     setFixedAnswers((prev) => ({
       ...prev,
       [itemId]: value,
@@ -379,7 +458,7 @@ const ApplicationEditPage = () => {
 
       const value = answers[item.id];
       if (item.type === "SELECT") {
-        const normalized = Array.isArray(value) ? value : value ? [value] : [];
+        const normalized = normalizeSelectValue(value);
         if (normalized.length === 0) {
           count += 1;
         }
@@ -400,11 +479,11 @@ const ApplicationEditPage = () => {
 
     fixedItems.forEach((item) => {
       if (!item.required) return;
-      const rawValue = fixedAnswers[item.id] ?? "";
+      const rawValue = fixedAnswers[item.id];
       const value =
-        item.type === "SELECT" && rawValue.startsWith("[")
-          ? JSON.parse(rawValue)
-          : rawValue;
+        item.type === "SELECT"
+          ? normalizeSelectValue(rawValue)
+          : rawValue ?? "";
 
       if (Array.isArray(value)) {
         if (value.length === 0) {
@@ -507,25 +586,10 @@ const ApplicationEditPage = () => {
     const fixedAnswersPayload = fixedItems
       .filter((item) => item.type !== "ANNOUNCEMENT")
       .map((item) => {
-        let value: string | string[] = fixedAnswers[item.id] ?? "";
-
-        if (typeof value === "string" && value.startsWith("[")) {
-          try {
-            const parsed = JSON.parse(value);
-            if (Array.isArray(parsed)) {
-              value = parsed;
-            }
-          } catch {
-            // ignore
-          }
-        }
+        const value: string | string[] = fixedAnswers[item.id] ?? "";
 
         if (item.type === "SELECT") {
-          const normalized = Array.isArray(value)
-            ? value
-            : value
-            ? [value]
-            : [];
+          const normalized = normalizeSelectValue(value);
           const optionIds = buildSelectedOptionIds(item, normalized);
           return {
             itemId: item.id,
@@ -552,11 +616,7 @@ const ApplicationEditPage = () => {
         const value = answers[item.id];
 
         if (item.type === "SELECT") {
-          const normalized = Array.isArray(value)
-            ? value
-            : value
-            ? [value]
-            : [];
+          const normalized = normalizeSelectValue(value);
           const optionIds = buildSelectedOptionIds(item, normalized);
           return {
             itemId: item.id,
@@ -627,8 +687,8 @@ const ApplicationEditPage = () => {
             지원자 정보를 확인할 수 없습니다.
           </p>
           <p className="text-15-medium text-black-60">
-            지원서 조회를 위해 이름과 이메일이 필요합니다. 지원서 조회 페이지에서
-            다시 로그인해 주세요.
+            지원서 조회를 위해 이름과 이메일이 필요합니다. 지원서 조회
+            페이지에서 다시 로그인해 주세요.
           </p>
           <button
             type="button"
@@ -684,6 +744,9 @@ const ApplicationEditPage = () => {
             <h2 className="text-title-18-semibold text-black-90">
               지원자 기본 정보
             </h2>
+            <p className="text-13-regular text-black-50">
+              이름, 전화번호, 이메일은 수정할 수 없습니다.
+            </p>
             <div className="flex flex-col gap-4">
               {fixedFieldEntries.map(({ field, item }, index) => {
                 const hasItem = Boolean(item);
@@ -719,6 +782,7 @@ const ApplicationEditPage = () => {
                     }}
                     onDateChange={() => undefined}
                     onSelectChange={() => undefined}
+                    isReadOnly
                   />
                 );
               })}

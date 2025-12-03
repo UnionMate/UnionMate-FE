@@ -11,6 +11,7 @@ type ApplicationQuestionCardProps = {
   onTextChange: (value: string) => void;
   onDateChange: (value: string) => void;
   onSelectChange: (optionKey: string, multiple: boolean) => void;
+  isReadOnly?: boolean;
 };
 
 const getOptionKey = (option: RecruitmentItemOption) =>
@@ -22,6 +23,7 @@ const ApplicationQuestionCard = ({
   onTextChange,
   onDateChange,
   onSelectChange,
+  isReadOnly = false,
 }: ApplicationQuestionCardProps) => {
   if (item.type === "ANNOUNCEMENT") {
     return (
@@ -41,9 +43,20 @@ const ApplicationQuestionCard = ({
         ? [value]
         : [];
     const isMultiple = Boolean(item.multiple);
+    const rightBadgeLabel = isReadOnly
+      ? "수정 불가"
+      : isMultiple
+        ? "복수 선택"
+        : "단일 선택";
 
     return (
-      <article className="rounded-3xl border border-primary/15 bg-white px-6 py-5 shadow-[0px_12px_24px_rgba(0,0,0,0.04)]">
+      <article
+        className={clsx(
+          "rounded-3xl border border-primary/15 bg-white px-6 py-5 shadow-[0px_12px_24px_rgba(0,0,0,0.04)]",
+          isReadOnly && "opacity-75"
+        )}
+        aria-disabled={isReadOnly}
+      >
         <header className="flex items-start justify-between gap-4">
           <div className="space-y-2">
             <div className="flex items-center gap-1 text-title-16-semibold text-black-90">
@@ -55,7 +68,7 @@ const ApplicationQuestionCard = ({
             )}
           </div>
           <span className="rounded-full bg-black-5 px-3 py-1 text-12-semibold text-black-60">
-            {isMultiple ? "복수 선택" : "단일 선택"}
+            {rightBadgeLabel}
           </span>
         </header>
         <div className="mt-5 flex flex-col gap-3">
@@ -68,7 +81,8 @@ const ApplicationQuestionCard = ({
               <label
                 key={optionKey}
                 className={clsx(
-                  "flex w-full cursor-pointer items-center gap-3 rounded-2xl border px-4 py-3 transition",
+                  "flex w-full items-center gap-3 rounded-2xl border px-4 py-3 transition",
+                  isReadOnly ? "cursor-not-allowed opacity-80" : "cursor-pointer",
                   isChecked
                     ? "border-primary bg-primary/5"
                     : "border-black-10 bg-white hover:border-primary/30"
@@ -77,8 +91,12 @@ const ApplicationQuestionCard = ({
                 <input
                   type={isMultiple ? "checkbox" : "radio"}
                   checked={isChecked}
-                  onChange={() => onSelectChange(optionKey, isMultiple)}
-                  className="h-4 w-4 cursor-pointer"
+                  disabled={isReadOnly}
+                  onChange={() => {
+                    if (isReadOnly) return;
+                    onSelectChange(optionKey, isMultiple);
+                  }}
+                  className="h-4 w-4 cursor-pointer disabled:cursor-not-allowed"
                 />
                 <div className="flex flex-col">
                   <span className="text-15-medium text-black-80">
@@ -100,7 +118,13 @@ const ApplicationQuestionCard = ({
 
   if (item.type === "CALENDAR") {
     return (
-      <article className="rounded-3xl border border-primary/15 bg-white px-6 py-5 shadow-[0px_12px_24px_rgba(0,0,0,0.04)]">
+      <article
+        className={clsx(
+          "rounded-3xl border border-primary/15 bg-white px-6 py-5 shadow-[0px_12px_24px_rgba(0,0,0,0.04)]",
+          isReadOnly && "opacity-75"
+        )}
+        aria-disabled={isReadOnly}
+      >
         <header className="space-y-2">
           <div className="flex items-center gap-1 text-title-16-semibold text-black-90">
             <span>{item.title}</span>
@@ -113,8 +137,12 @@ const ApplicationQuestionCard = ({
         <input
           type="date"
           value={typeof value === "string" ? value : ""}
-          onChange={(event) => onDateChange(event.target.value)}
-          className="mt-4 w-full rounded-2xl border border-black-15 px-4 py-3 text-15-medium text-black-80 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+          disabled={isReadOnly}
+          onChange={(event) => {
+            if (isReadOnly) return;
+            onDateChange(event.target.value);
+          }}
+          className="mt-4 w-full rounded-2xl border border-black-15 px-4 py-3 text-15-medium text-black-80 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-black-5"
         />
       </article>
     );
@@ -124,7 +152,13 @@ const ApplicationQuestionCard = ({
   const InputComponent = isLongAnswer ? "textarea" : "input";
 
   return (
-    <article className="rounded-3xl border border-primary/15 bg-white px-6 py-5 shadow-[0px_12px_24px_rgba(0,0,0,0.04)]">
+    <article
+      className={clsx(
+        "rounded-3xl border border-primary/15 bg-white px-6 py-5 shadow-[0px_12px_24px_rgba(0,0,0,0.04)]",
+        isReadOnly && "opacity-75"
+      )}
+      aria-readonly={isReadOnly}
+    >
       <header className="space-y-2">
         <div className="flex items-center gap-1 text-title-16-semibold text-black-90">
           <span>{item.title}</span>
@@ -136,14 +170,18 @@ const ApplicationQuestionCard = ({
       </header>
       <InputComponent
         value={typeof value === "string" ? value : ""}
-        onChange={(event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
-          onTextChange(event.target.value)
-        }
+        readOnly={isReadOnly}
+        disabled={isReadOnly}
+        onChange={(event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+          if (isReadOnly) return;
+          onTextChange(event.target.value);
+        }}
         placeholder="답변을 입력해주세요."
         maxLength={item.maxLength ?? (isLongAnswer ? 1000 : 255)}
         className={clsx(
           "mt-4 w-full rounded-2xl border border-black-15 px-4 py-3 text-15-medium text-black-80 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20",
-          isLongAnswer && "min-h-[160px] resize-none"
+          isLongAnswer && "min-h-[160px] resize-none",
+          isReadOnly && "cursor-not-allowed bg-black-5"
         )}
       />
     </article>
